@@ -1,6 +1,6 @@
-# Droniada 2025 competition
+# Martian Mines ROS2
 
-## Requirements
+### Requirements
 - **Docker** (Docker CLI recommended)
 - **Visual Studio Code** (recommended) with the following extensions:
   - [Docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker)
@@ -16,7 +16,7 @@ Running docker with GPU support requires [nvidia-container-toolkit](https://docs
 
 Open repository in vscode:
 ```bash
-cd /path/to/martian_mines_ros2
+cd /path/to/martian_mines_ros2/
 code .
 ```
 Click `Ctrl+Shift+P` and select `Dev Containers: Rebuild Container`. 
