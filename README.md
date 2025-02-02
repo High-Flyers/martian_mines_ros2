@@ -1,41 +1,33 @@
-Add repo OSRF:
+# Droniada 2025 competition
 
-```
-sudo apt update
-sudo apt -y install wget lsb-release gnupg
-sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" > /etc/apt/sources.list.d/gazebo-stable.list'
-wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
-sudo apt update
-```
+## Requirements
+- **Docker** (Docker CLI recommended)
+- **Visual Studio Code** (recommended) with the following extensions:
+  - [Docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker)
+  - [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
-install package libqz-cmake3-dev:
-```
-sudo apt install libgz-cmake3-dev
+### Docker build
+```bash
+docker build -t highflyers/martian_mines_ros2:latest . --build-arg USER_UID=$(id -u)
 ```
 
-Add gz-plugin2:
+### Run for development
+Running docker with GPU support requires [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html), but if you don't have NVIDIA GPU, you can remove the `--gpus=all` flag in `devcontainer.json` and run this container only with CPU.
+
+Open repository in vscode:
+```bash
+cd /path/to/martian_mines_ros2
+code .
 ```
-sudo apt update
-sudo apt install -y wget
-wget -qO - https://packages.osrfoundation.org/gz.key | sudo apt-key add -
-sudo sh -c 'echo "deb [arch=amd64] https://packages.osrfoundation.org/gz/ubuntu jammy main" > /etc/apt/sources.list.d/gz-latest.list'
-sudo apt update
+Click `Ctrl+Shift+P` and select `Dev Containers: Rebuild Container`. 
+This will open the repository in the container and you can start developing.
+
+To rebuild workspace use shortcut `Ctrl+Shift+B` in the vscode.
+
+To execute offboard example, open terminal in vscode and run:
+```bash
+ros2 run offboard offboard_example
 ```
 
-install gz-plugin2:
-```
-sudo apt install libgz-plugin2-dev
-```
-
-add gz-common5 repo:
-```sudo apt update
-sudo apt install -y wget
-wget -qO - https://packages.osrfoundation.org/gz.key | sudo apt-key add -
-sudo sh -c 'echo "deb [arch=amd64] https://packages.osrfoundation.org/gz/ubuntu jammy main" > /etc/apt/sources.list.d/gz-latest.list'
-sudo apt update
-```
-
-install gz-common5:
-```
-sudo apt install libgz-common5-dev
-```
+### Throubleshoting
+If you will encounter a problem with "xcb" (GUI applications won't open) just run `xhost +local:docker` on your host machine.
