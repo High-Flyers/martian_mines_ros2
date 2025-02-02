@@ -2,6 +2,8 @@
 
 ### Requirements
 - **Docker** (Docker CLI recommended)
+  - Add your user to the Docker group to grant the necessary permissions; otherwise, you must prefix commands with sudo.
+  
 - **Visual Studio Code** (recommended) with the following extensions:
   - [Docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker)
   - [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
@@ -19,7 +21,7 @@ Open repository in vscode:
 cd /path/to/martian_mines_ros2/
 code .
 ```
-Click `Ctrl+Shift+P` and select `Dev Containers: Rebuild Container`. 
+Click `Ctrl+Shift+P` and select `Dev Containers: Rebuild and Reopen in Container`. 
 This will open the repository in the container and you can start developing.
 
 To rebuild workspace use shortcut `Ctrl+Shift+B` in the vscode.

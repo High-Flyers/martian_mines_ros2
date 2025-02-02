@@ -40,12 +40,12 @@ RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" && \
 
 # Copy simulation package to workspace
 WORKDIR $ROS_WORKSPACE/src
-COPY . suas_2025
+COPY . martian_mines_ros2
 
 WORKDIR $ROS_WORKSPACE
 # hadolint ignore=SC1091
 RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" && \
-    src/suas_2025/scripts/build.sh
+    src/martian_mines_ros2/scripts/build.sh
 
 RUN echo "source \"/opt/ros/${ROS_DISTRO}/setup.bash\"" >> "/home/${USERNAME}/.bashrc" && \
     echo "source \"${ROS_WORKSPACE}/install/setup.bash\"" >> "/home/${USERNAME}/.bashrc"
