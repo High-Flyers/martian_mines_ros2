@@ -1,10 +1,10 @@
 import queue
 import requests
-import rclpy
-from rclpy.node import Node
+import threading
+import time
 
 
-class Uploader(Node):
+class Uploader:
     """
     Class for uploading some data to the server.
 
@@ -14,17 +14,24 @@ class Uploader(Node):
     """
 
     def __init__(self, url: str, upload_interval: float = 0.5) -> None:
-        super().__init__('uploader_node')
         self._url = url
         self._data_queue = queue.Queue()
         self._upload_interval = upload_interval
         
         # Set up a timer to periodically check the queue and process the data
-        self.create_timer(self._upload_interval, self._process_queue)
+        self._stop_event = threading.Event()
+        self._thread = threading.Thread(target=self._run)
+        self._thread.start()
 
     def add(self, item) -> None:
         """Add an item to the sending queue."""
         self._data_queue.put(item, block=False)
+
+    def _run(self):
+        """Run the periodic queue processing."""
+        while not self._stop_event.is_set():
+            self._process_queue()
+            time.sleep(self._upload_interval)
 
     def _process_queue(self):
         """Check and process the queue periodically."""
@@ -39,21 +46,28 @@ class Uploader(Node):
             response = requests.post(self._url, json=data)
             return response
         except requests.RequestException as e:
-            self.get_logger().error(f"Failed to send data: {e}")
+            print(f"Failed to send data: {e}")
             return None
 
+    def stop(self):
+        """Stop the uploader."""
+        self._stop_event.set()
+        self._thread.join()
 
-def main(args=None):
-    rclpy.init(args=args)
-    
+
+def main():
     # Example URL and uploader initialization
     url = 'http://example.com/upload'
     uploader = Uploader(url)
 
-    # Keep the node running
-    rclpy.spin(uploader)
+    # Example of adding data to the uploader
+    uploader.add({'key': 'value'})
 
-    rclpy.shutdown()
+    # Keep the uploader running for a while to demonstrate functionality
+    try:
+        time.sleep(10)
+    finally:
+        uploader.stop()
 
 
 if __name__ == '__main__':

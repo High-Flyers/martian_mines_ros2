@@ -3,7 +3,7 @@ from rclpy.node import Node
 from rclpy.duration import Duration
 from geometry_msgs.msg import PoseStamped, TwistStamped
 from mavros_msgs.msg import ExtendedState
-from mavros_msgs.srv import CommandBool, SetMode, ParamSet, ParamSetResponse, ParamSetRequest
+from mavros_msgs.srv import CommandBool, SetMode, ParamSet
 from std_msgs.msg import Float64
 import numpy as np
 from tf2_ros import TransformListener, Buffer
@@ -171,8 +171,8 @@ class Offboard(Node):
     def callback_rel_alt(self, msg: Float64):
         self.rel_alt = msg.data
 
-    def set_param(self, name: str, value) -> ParamSetResponse:
-        request = ParamSetRequest()
+    def set_param(self, name: str, value) -> ParamSet.Response:
+        request = ParamSet.Request()
         request.param_id = name
 
         if isinstance(value, int):

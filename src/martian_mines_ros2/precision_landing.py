@@ -6,11 +6,11 @@ from mavros_msgs.msg import LandingTarget
 from sensor_msgs.msg import CameraInfo
 from vision_msgs.msg import BoundingBox2D
 from std_msgs.msg import Empty
-from std_srvs.srv import Trigger, TriggerResponse
+from std_srvs.srv import Trigger
 from tf2_ros import Buffer, TransformListener
 from image_geometry import PinholeCameraModel
 from tf2_geometry_msgs import PoseStamped
-from drone.offboard import Offboard
+from martian_mines_ros2.drone.offboard import Offboard
 import numpy as np
 
 
@@ -24,6 +24,31 @@ def point_to_point_stamped(point: Point, frame_id='map') -> PointStamped:
 
     return point_stamped
 
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import CameraInfo
+
+def wait_for_message(node, topic, msg_type, timeout=None):
+    """ Custom implementation of rospy.wait_for_message in ROS2 """
+    node.get_logger().info("Waiting for message on topic: " + topic)
+
+    future = rclpy.Future() 
+
+
+    def callback(msg):
+        if not future.done():
+            future.set_result(msg)
+
+    sub = node.create_subscription(msg_type, topic, callback, 10)
+
+    # Wait until message is received or timeout occurs
+    rclpy.spin_until_future_complete(node, future, timeout_sec=timeout)
+    node.destroy_subscription(sub)  # Cleanup subscription
+
+    node.get_logger().info("Message received on topic: " + topic)
+
+    return future.result() if future.done() else None  # Return message if received
+
 
 class PrecisionLanding(Node):
     def __init__(self) -> None:
@@ -35,7 +60,10 @@ class PrecisionLanding(Node):
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.camera_model = PinholeCameraModel()
         self.landing_target = self.__init_landing_target()
-        self.camera_info = self.create_subscription(CameraInfo, 'camera/camera_info', self.callback_camera_info, 10)
+        self.camera_info = wait_for_message(self, 'camera/camera_info', CameraInfo)
+
+
+        
         self.timer_check_landing_status = None
 
         self.__init_precision_landing_params()
@@ -48,10 +76,15 @@ class PrecisionLanding(Node):
         self.pub_landing_finished = self.create_publisher(Empty, "precision_landing/finished", 1)
         self.service_start = self.create_service(Trigger, "precision_landing/start", self.__callback_service_start)
 
+        self.get_logger().info("PrecisionLanding node initialized")
+
+
     def wait_for_transform(self):
+        self.get_logger().info("Waiting for transform from camera_link to map")
         while rclpy.ok():
-            if self.tf_buffer.can_transform(self.camera_link, "map", rclpy.time.Time(), Duration(seconds=1.0)):
+            if self.tf_buffer.can_transform(self.camera_link, "map", rclpy.time.Time().to_msg()):
                 break
+        self.get_logger().info("Transform from camera_link to map received")
 
     def __init_precision_landing_params(self):
         landing_target_timeout = self.declare_parameter('landing_target_timeout', 2.0).value
@@ -92,7 +125,7 @@ class PrecisionLanding(Node):
         response = self.offboard.set_precision_landing_mode()
         self.timer_check_landing_status = self.create_timer(0.1, self.__callback_check_landing_status)
 
-        return TriggerResponse(success=response.mode_sent, message="")
+        return Trigger.Response(success=response.mode_sent, message="")
 
     def __callback_check_landing_status(self):
         if self.offboard.is_landed():

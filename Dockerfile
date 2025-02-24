@@ -10,7 +10,16 @@ RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
     build-essential \
     cmake \
     ros-dev-tools \
+    python3-pip \
+    ros-humble-mavros \
+    ros-humble-mavros-extras \
+    ros-humble-geographic-msgs \
+    ros-humble-vision-msgs \
+    ros-humble-image-geometry \
     && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install ultralytics dill pyrr shapely transitions matplotlib opencv-contrib-python
+RUN pip3 install -U numpy
 
 # Create a non-root user with sudo privileges
 RUN groupadd --gid ${USER_GID} ${USERNAME} \
