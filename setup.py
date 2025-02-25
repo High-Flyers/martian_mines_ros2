@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 import os
 from glob import glob
 
@@ -15,8 +15,7 @@ else:
 setup(
     name=package_name,
     version="0.1.0",
-    packages=find_packages(where="src"),  # Automatically find subpackages
-    package_dir={"": "src"},
+    packages=[package_name],
     install_requires=requirements,
     extras_require={"dev": ["pytest"]},
     zip_safe=True,
@@ -33,7 +32,7 @@ setup(
     },
     data_files=[
         ("share/" + package_name, ["package.xml"]),
-        (os.path.join("share", package_name, "launch"), glob("launch/*.launch.py")),  # Include launch files
-        (os.path.join("share", package_name, "config"), glob("config/*.yaml")),  # Include config files
+        ("share/" + package_name + "/launch", glob("launch/*.launch.py")),
+        ("share/" + package_name + "/config", glob("config/*.yaml")),
     ],
 )
