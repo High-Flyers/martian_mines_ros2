@@ -13,7 +13,7 @@ class TfStartPose(Node):
         self.drone_z_offset = self.get_parameter('drone_z_offset').get_parameter_value().double_value
         self.local_position = None
         self.local_pos_initialized = False
-        self.create_subscription(Odometry, '/uav0/mavros/local_position/odom', self.position_callback, 10)
+        self.subscription = self.create_subscription(Odometry, '/uav0/mavros/local_position/odom', self.position_callback, 10)
         self.broadcaster = tf2_ros.StaticTransformBroadcaster(self)
 
     def position_callback(self, msg):
@@ -22,6 +22,7 @@ class TfStartPose(Node):
             self.local_pos_initialized = True
             self.get_logger().info(f"Local position received, pose: \n{self.local_position}")
         self.send_transform()
+        self.destroy_subscription(self.subscription)
 
     def send_transform(self):
         t = geometry_msgs.msg.TransformStamped()

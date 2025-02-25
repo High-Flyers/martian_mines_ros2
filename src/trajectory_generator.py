@@ -23,7 +23,7 @@ class TrajectoryGenerator(Node):
         self.declare_parameter('trajectory_link', 'start_pose')
         self.trajectory_link = self.get_parameter('trajectory_link').get_parameter_value().string_value
 
-        self.create_subscription(CameraInfo,'camera/camera_info', self.get_camera_model, 15)
+        self.subscription = self.create_subscription(CameraInfo,'camera/camera_info', self.get_camera_model, 15)
 
         self.camera_model = PinholeCameraModel()
         self.camera_info_received = False
@@ -47,6 +47,7 @@ class TrajectoryGenerator(Node):
     def get_camera_model(self, msg):
         self.camera_model.fromCameraInfo(msg)
         self.camera_info_received = True
+        self.destroy_subscription(self.subscription)
     
     def wait_for_camera_info(self):
         while not self.camera_info_received and rclpy.ok():
