@@ -1,6 +1,7 @@
-/**/build/
-/**/install/
-/**/log/
-/**/*.pyc
+**/build/
+**/install/
+**/log/
+**/*.pyc
+**/__pycache__/
 
 
