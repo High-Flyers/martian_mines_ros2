@@ -1,7 +1,7 @@
 import numpy as np
 import math
 from figure.bounding_box import BoundingBox
-from utils.positioner import get_coords_distance  # TO refactor
+from utils.positioner import get_coords_distance
 from figure.figure import Figure
 from figure.rejection_type import RejectionType
 from typing import List
