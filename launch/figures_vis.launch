@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- UAV0 namespace configuration -->
+    <group namespace="uav0">
+        <!-- Launch detections visualization node -->
+        <node pkg="martian_mines" exec="detections_visualization.py" name="detections_visualization" output="screen"/>
+
+        <!-- Launch confirmed figures visualization node with remapping and parameter -->
+        <node pkg="martian_mines" exec="detections_visualization.py" name="confirmed_figures_visualization" output="screen">
+            <param name="marker_size" value="0.5"/>
+            <remap from="figure_finder/detected_figures" to="figure_finder/confirmed_figures"/>
+        </node>
+    </group>
+</launch>

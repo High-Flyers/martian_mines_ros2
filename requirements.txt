@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 aiogrpc==1.8; python_version >= '3.6'
 black==24.4.2; python_version >= '3.8'
 click==8.1.7; python_version >= '3.7'
@@ -21,3 +22,56 @@ tomli==2.0.1; python_version >= '3.7'
 typing-extensions==4.11.0; python_version >= '3.8'
 pyrr==0.10.3; python_version >= '3.6'
 pytest==8.2.1
+=======
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+# Core dependencies for ROS2
+rclpy = "*"
+rosdep = "*"
+colcon-common-extensions = "*"
+
+# Drone communication
+mavsdk = "==2.5.1"
+pymavlink = "==2.4.41"
+
+# Image processing
+numpy = "==1.26.4"
+opencv-python = "==4.9.0.80"
+pyrealsense2 = "==2.55.1.6486"
+imagezmq = "==1.1.1"
+
+# Communication protocols
+aiogrpc = "==1.8"
+grpcio = "==1.63.0"
+protobuf = "==3.20.1"
+pyzmq = "==26.0.3"
+
+# Development tools
+black = "==24.4.2"
+click = "==8.1.7"
+future = "==1.0.0"
+lxml = "==5.2.1"
+mypy-extensions = "==1.0.0"
+packaging = "==24.0"
+pathspec = "==0.12.1"
+platformdirs = "==4.2.1"
+tomli = "==2.0.1"
+typing-extensions = "==4.11.0"
+
+# State machine management (e.g., autonomous drone missions)
+transitions = "==0.9.1"
+
+# Additional dependencies for ROS2
+pyrr = "==0.10.3"
+pytest = "==8.2.1"
+
+[dev-packages]
+black = "*"
+
+[requires]
+python_version = "3.10"
+>>>>>>> mission_control

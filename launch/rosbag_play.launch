@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- PX4 environment variables -->
+    <arg name="real_world" default="true"/>
+    <arg name="bag_file" default=""/>
+    <arg name="config_file" default="$(find-pkg-share martian_mines)/config/sim.yaml" if-unset="$(var real_world)"/>
+    <arg name="config_file" default="$(find-pkg-share martian_mines)/config/real.yaml" if="$(var real_world)"/>
+    <arg name="no_start_pose" default="false"/>
+
+    <!-- Use simulated time -->
+    <set_param name="use_sim_time" value="true"/>
+
+    <!-- Start rosbag playback -->
+    <node pkg="rosbag2" exec="play" name="player" output="screen"
+          args="--clock -l $(find-pkg-share martian_mines)/data/$(var bag_file)"/>
+
+    <group namespace="uav0">
+        <!-- Load parameters -->
+        <param from="$(var config_file)"/>
+
+        <!-- Topic remapping if real_world is true -->
+        <remap from="camera/image_raw" to="color/image_raw" if="$(var real_world)"/>
+        <remap from="camera/camera_info" to="color/camera_info" if="$(var real_world)"/>
+
+        <!-- Start detection node -->
+        <node pkg="martian_mines" exec="detection.py" name="detection" output="screen"/>
+
+        <!-- Start figure finder node -->
+        <node pkg="martian_mines" exec="figure_finder.py" name="figure_finder" output="screen">
+            <param name="config_file_path" value="$(var config_file)"/>
+        </node>
+
+        <!-- Call service to start figure finder -->
+        <node pkg="ros2service" exec="call" name="figure_finder_start" output="screen"
+              args="figure_finder/start std_srvs/srv/Trigger"/>
+    </group>
+</launch>

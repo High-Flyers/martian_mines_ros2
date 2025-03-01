@@ -1,0 +1,179 @@
+Panels:
+  - Class: rviz2/Displays
+    Help Height: 0
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /Global Options1
+        - /Status1
+        - /Grid1
+        - /TF1
+        - /TF1/Frames1
+        - /TF1/Tree1
+        - /MarkerArray1
+      Splitter Ratio: 0.4554455578327179
+    Tree Height: 716
+  - Class: rviz2/Selection
+    Name: Selection
+  - Class: rviz2/Tool Properties
+    Expanded:
+      - /2D Pose Estimate1
+      - /2D Nav Goal1
+      - /Publish Point1
+    Name: Tool Properties
+    Splitter Ratio: 0.5886790156364441
+  - Class: rviz2/Views
+    Expanded:
+      - /Current View1
+    Name: Views
+    Splitter Ratio: 0.5
+  - Class: rviz2/Time
+    Name: Time
+    SyncMode: 0
+    SyncSource: Image
+Preferences:
+  PromptSaveOnExit: true
+Toolbars:
+  toolButtonStyle: 2
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.5
+      Cell Size: 1
+      Class: rviz2/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Line Style:
+        Line Width: 0.03
+        Value: Lines
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 100
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Class: rviz2/TF
+      Enabled: true
+      Filter (blacklist): ""
+      Filter (whitelist): ""
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        base_link:
+          Value: true
+        start_pose:
+          Value: true
+        map:
+          Value: true
+        odom:
+          Value: false
+      Marker Alpha: 1
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        map:
+          base_link:
+            start_pose:
+              {}
+          odom:
+            {}
+      Update Interval: 0
+      Value: true
+    - Class: rviz2/Image
+      Enabled: true
+      Image Topic: /uav0/detection/image
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Detection Image
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: compressed
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Class: rviz2/PointStamped
+      Color: 204; 41; 204
+      Enabled: true
+      History Length: 1
+      Name: Debug Figure Position
+      Queue Size: 10
+      Radius: 0.02
+      Topic: /uav0/detection/debug_figure_pos
+      Unreliable: false
+      Value: true
+    - Class: rviz2/Image
+      Enabled: true
+      Image Topic: /uav0/color/image_raw
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Raw Image
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Class: rviz2/MarkerArray
+      Enabled: true
+      Marker Topic: /uav0/detections_visualization/markers
+      Name: Detection Markers
+      Namespaces:
+        "": true
+      Queue Size: 1
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Default Light: true
+    Fixed Frame: map
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz2/Interact
+      Hide Inactive Objects: true
+    - Class: rviz2/MoveCamera
+    - Class: rviz2/Select
+    - Class: rviz2/FocusCamera
+    - Class: rviz2/Measure
+    - Class: rviz2/SetInitialPose
+      Theta std deviation: 0.2617993950843811
+      Topic: /initialpose
+      X std deviation: 0.5
+      Y std deviation: 0.5
+    - Class: rviz2/SetGoal
+      Topic: /goal_pose
+    - Class: rviz2/PublishPoint
+      Single click: true
+      Topic: /clicked_point
+  Value: true
+  Views:
+    Current:
+      Class: rviz2/Orbit
+      Distance: 12.88
+      Field of View: 0.785
+      Focal Point:
+        X: 1.65
+        Y: -1.31
+        Z: -1.79
+      Name: Current View
+      Pitch: 1.05
+      Target Frame: base_link
+      Yaw: 5.27
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 1403
+  Hide Left Dock: false
+  Hide Right Dock: false
+  Width: 2560
+  X: 0
+  Y: 0

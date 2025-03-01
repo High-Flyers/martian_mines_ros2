@@ -1,0 +1,135 @@
+Panels:
+  - Class: rviz_common/Displays
+    Help Height: 78
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /Global Options1
+        - /Status1
+        - /TF1/Frames1
+        - /TF1/Tree1
+        - /Grid1
+      Splitter Ratio: 0.8647058606147766
+    Tree Height: 369
+  - Class: rviz_common/Selection
+    Name: Selection
+  - Class: rviz_common/Tool Properties
+    Expanded:
+      - /2D Pose Estimate1
+      - /2D Nav Goal1
+      - /Publish Point1
+    Name: Tool Properties
+    Splitter Ratio: 0.5886790156364441
+  - Class: rviz_common/Views
+    Expanded:
+      - /Current View1
+    Name: Views
+    Splitter Ratio: 0.5
+  - Class: rviz_common/Time
+    Name: Time
+    SyncMode: 0
+    SyncSource: Image
+Preferences:
+  PromptSaveOnExit: true
+Toolbars:
+  toolButtonStyle: 2
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        base_link: true
+        camera_link: true
+        map: true
+        start_pose: true
+        uber_map: true
+      Marker Alpha: 1
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Update Interval: 0
+    - Class: rviz_default_plugins/Image
+      Enabled: true
+      Image Topic: /uav0/detection/image
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: compressed
+      Unreliable: false
+    - Class: rviz_default_plugins/Grid
+      Alpha: 0.5
+      Cell Size: 1
+      Color: 160; 160; 164
+      Enabled: true
+      Line Style:
+        Line Width: 0.03
+        Value: Lines
+      Name: Grid
+      Offset:
+        X: 10
+        Y: -10
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 30
+      Reference Frame: <Fixed Frame>
+    - Class: rviz_default_plugins/PointStamped
+      Alpha: 1
+      Color: 204; 41; 204
+      Enabled: true
+      Name: PointStamped
+      Queue Size: 10
+      Radius: 0.02
+      Topic: /uav0/figure_finder/debug_figure_pos
+    - Class: rviz_default_plugins/Path
+      Alpha: 1
+      Buffer Length: 1
+      Color: 25; 255; 0
+      Enabled: true
+      Name: Path
+      Topic: /uav0/trajectory_generator/path
+      Queue Size: 10
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Marker Topic: /environment_visualization/markers
+      Name: MarkerArray
+      Queue Size: 100
+  Global Options:
+    Background Color: 48; 48; 48
+    Default Light: true
+    Fixed Frame: start_pose
+    Frame Rate: 30
+  Tools:
+    - Class: rviz_default_plugins/Interact
+      Hide Inactive Objects: true
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+    - Class: rviz_default_plugins/SetInitialPose
+      Topic: /initialpose
+    - Class: rviz_default_plugins/SetGoal
+      Topic: /move_base_simple/goal
+    - Class: rviz_default_plugins/PublishPoint
+      Topic: /clicked_point
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 21.12
+      Focal Point:
+        X: 0.27
+        Y: -3.13
+        Z: 1.07
+      Target Frame: start_pose
+      Yaw: 2.56
+Window Geometry:
+  Height: 1008
+  Width: 1894
+  X: 10
+  Y: 34

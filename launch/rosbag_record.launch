@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Include the Realsense camera launch file -->
+    <include file="$(find-pkg-share martian_mines)/launch/realsense.launch.xml"/>
+
+    <!-- Launch MAVROS -->
+    <group namespace="uav0">
+        <include file="$(find-pkg-share mavros)/launch/px4.launch.xml">
+            <arg name="fcu_url" value="udp://:14550@localhost:14550"/>
+        </include>
+    </group>
+
+    <!-- Set MAVROS parameters -->
+    <set_param name="uav0/mavros/local_position/tf/send" value="true"/>
+
+    <!-- Static TF broadcaster for base_link to camera_link -->
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="tf_base_link_camera"
+          args="0.18 0 -0.1 1.571 3.14 0 base_link camera_link"/>
+</launch>
