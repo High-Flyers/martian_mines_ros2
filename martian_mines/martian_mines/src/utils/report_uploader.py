@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
 from std_msgs.msg import Float64
-from martian_mines_ros2.msg import FigureMsgList, FigureMsg    # to be updated as msgs are not yet created from ros2 implementation
+from martian_mines_msgs.msg import FigureMsgList, FigureMsg    # to be updated as msgs are not yet created from ros2 implementation
 from utils.coords_scaler import CoordinateScaler
 from utils.uploader import Uploader
 import message_filters

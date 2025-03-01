@@ -4,7 +4,7 @@ import os
 import numpy as np
 import cv2
 from sensor_msgs.msg import Image, CompressedImage
-from martian_mines_ros2.msg import BoundingBoxLabeledList
+from martian_mines_msgs.msg import BoundingBoxLabeledList
 from cv_bridge import CvBridge, CvBridgeError
 from detectors.aruco_detector import ArucoDetector
 from detectors.yolo_detector import YoloDetector

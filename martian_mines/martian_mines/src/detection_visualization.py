@@ -3,7 +3,7 @@ from rclpy.node import Node
 from visualization_msgs.msg import MarkerArray, Marker
 from geometry_msgs.msg import Pose, Vector3
 from std_msgs.msg import Header, ColorRGBA
-from martian_mines_ros2.msg import FigureMsgList, FigureMsg
+from martian_mines_msgs.msg import FigureMsgList, FigureMsg
 
 class DetectionVisualization(Node):
     def __init__(self) -> None:

@@ -3,7 +3,7 @@ from ultralytics import YOLO
 from typing import List
 from detectors.abstract_detector import AbstractDetector
 from vision_msgs.msg import BoundingBox2D
-from martian_mines_ros2.msg import BoundingBoxLabeled
+from martian_mines_msgs.msg import BoundingBoxLabeled
 
 class YoloDetector(AbstractDetector):
     def __init__(self, nn_model_path: str):

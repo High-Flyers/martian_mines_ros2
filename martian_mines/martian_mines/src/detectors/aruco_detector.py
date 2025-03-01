@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from typing import List, Tuple
 from vision_msgs.msg import BoundingBox2D
-from martian_mines_ros2.msg import BoundingBoxLabeled
+from martian_mines_msgs.msg import BoundingBoxLabeled
 from detectors.abstract_detector import AbstractDetector
 
 

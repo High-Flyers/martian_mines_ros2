@@ -15,6 +15,7 @@ RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
     ros-humble-mavros-extras \
     ros-humble-geographic-msgs \
     ros-humble-vision-msgs \
+    ros-humble-std-msgs \
     ros-humble-image-geometry \
     && rm -rf /var/lib/apt/lists/*
 
@@ -53,8 +54,7 @@ COPY . martian_mines_ros2
 
 WORKDIR $ROS_WORKSPACE
 # hadolint ignore=SC1091
-RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" && \
-    src/martian_mines_ros2/scripts/build.sh
+RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" 
 
 RUN echo "source \"/opt/ros/${ROS_DISTRO}/setup.bash\"" >> "/home/${USERNAME}/.bashrc" && \
     echo "source \"${ROS_WORKSPACE}/install/setup.bash\"" >> "/home/${USERNAME}/.bashrc"

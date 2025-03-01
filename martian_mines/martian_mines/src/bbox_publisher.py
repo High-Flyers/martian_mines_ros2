@@ -4,7 +4,7 @@ from rclpy.node import Node
 from std_srvs.srv import Trigger
 from std_srvs.srv import Empty
 from vision_msgs.msg import BoundingBox2D
-from martian_mines_ros2.msg import BoundingBoxLabeledList
+from martian_mines_msgs.msg import BoundingBoxLabeledList
 
 
 class BBoxPublisher(Node):
