@@ -1,0 +1,46 @@
+FROM ros:humble
+
+# Update package lists and install required dependencies
+RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
+    build-essential \
+    wget \
+    git \
+    cmake \
+    python3-colcon-common-extensions \  # Replace catkin-tools with colcon
+    mesa-utils \
+    python3-pip \
+    python3-tk \
+    ros-humble-mavros \
+    ros-humble-mavros-extras \
+    ros-humble-gazebo-ros \
+    ros-humble-gazebo-ros-pkgs \
+    ros-humble-vision-opencv \  # Replace cv-bridge
+    ros-humble-tf2-geometry-msgs \
+    ros-humble-image-geometry \
+    ros-humble-tf2-tools \
+    ros-humble-vision-msgs \
+    ros-humble-image-transport-plugins \
+    ros-humble-rviz2 \  # Replace rviz with rviz2
+    && rm -rf /var/lib/apt/lists/*
+
+# Install required Python packages
+RUN pip3 install ultralytics dill pyrr shapely transitions matplotlib opencv-contrib-python==4.2.*
+RUN pip3 install -U numpy
+
+# Create and setup a new user
+RUN adduser --disabled-password --gecos '' docker && \
+    adduser docker sudo && \
+    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+USER docker
+
+# Create ROS2 workspace
+WORKDIR /home/docker
+RUN mkdir -p ws/src
+WORKDIR ws/src
+ENV ROS_WORKSPACE=/home/docker/ws
+
+# Initialize ROS2 workspace (colcon doesn't need explicit initialization like catkin)
+WORKDIR $ROS_WORKSPACE
+
+ENTRYPOINT ["/ros_entrypoint.sh"]
+CMD ["/bin/bash"]

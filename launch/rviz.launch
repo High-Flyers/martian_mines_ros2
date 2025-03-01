@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Define the config argument -->
+    <arg name="config" default="$(find-pkg-share martian_mines)/config/mission.rviz"/>
+
+    <!-- Launch RViz with the specified configuration -->
+    <node pkg="rviz2" exec="rviz2" name="rviz" args="-d $(var config)" output="screen"/>
+
+    <!-- Launch the environment visualization node -->
+    <node pkg="martian_mines" exec="environment_visualization.py" name="environment_visualization" output="screen"/>
+</launch>
