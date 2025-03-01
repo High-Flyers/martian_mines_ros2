@@ -22,12 +22,18 @@ setup(
     maintainer="highflyers",
     maintainer_email="highflyers.polsl@gmail.com",
     description="Martian Mines ROS2 package",
-    tests_require=["pytest"],
     entry_points={
         "console_scripts": [
+            "figure_finder = martian_mines_ros2.figure_finder:main",
             "precision_landing = martian_mines_ros2.precision_landing:main",
-            "offboard = martian_mines_ros2.drone.offboard:main",
+            "bbox_publisher = martian_mines_ros2.bbox_publisher:main",
+            "detection = martian_mines_ros2.detection:main",
+            "trajectory_generator = martian_mines_ros2.trajectory_generator:main",
             "report_uploader = martian_mines_ros2.utils.report_uploader:main",
+            "environment_visualization = martian_mines_ros2.environment_visualization:main",
+            "trajectory_tracker = martian_mines_ros2.trajectory_tracker:main",
+            "detections_visualization = martian_mines_ros2.detections_visualization:main",
+            # "mission_controller = martian_mines_ros2.mission_controller:main",
         ],
     },
     data_files=[
