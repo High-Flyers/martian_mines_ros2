@@ -1,5 +1,5 @@
 import rclpy
-from rclpy import Node
+from rclpy.node import Node
 
 import numpy as np
 import time
@@ -55,7 +55,7 @@ class TrajectoryTracker(Node):
         if self.pure_pursiut.is_last(current_pose):
             self.offboard.set_hold_mode()
             self.pub_finished.publish()
-            self.timer.shutdown()
+            self.destroy_timer(self.timer)
 
 def main(args = None):
     rclpy.init(args=args)
