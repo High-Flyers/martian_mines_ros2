@@ -3,7 +3,7 @@ import numpy as np
 from typing import List, Tuple
 from vision_msgs.msg import BoundingBox2D
 from martian_mines_msgs.msg import BoundingBoxLabeled
-from detectors.abstract_detector import AbstractDetector
+from .abstract_detector import AbstractDetector
 
 
 class ArucoDetector(AbstractDetector):

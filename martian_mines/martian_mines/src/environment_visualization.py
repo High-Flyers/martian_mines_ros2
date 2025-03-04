@@ -7,7 +7,7 @@ from visualization_msgs.msg import MarkerArray, Marker
 from geometry_msgs.msg import Pose, Vector3
 from std_msgs.msg import Header, ColorRGBA
 
-from utils.environment import Environemnt  # Zakładam, że masz ten moduł
+from utils.environment import Environemnt
 
 
 class EnvironmentVisualization(Node):
