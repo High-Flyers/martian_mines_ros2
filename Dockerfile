@@ -19,7 +19,7 @@ RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
     ros-humble-image-geometry \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install ultralytics dill pyrr shapely transitions matplotlib opencv-contrib-python
+RUN pip3 install ultralytics dill pyrr shapely transitions matplotlib opencv-contrib-python cv_bridge
 RUN pip3 install -U numpy
 
 # Create a non-root user with sudo privileges
