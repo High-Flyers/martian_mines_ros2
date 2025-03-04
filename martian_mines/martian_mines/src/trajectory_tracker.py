@@ -52,7 +52,7 @@ class TrajectoryTracker(Node):
         velocities = self.pure_pursuit.get_velocities(current_pose, self.velocity)
         self.offboard.fly_velocity(*velocities)
 
-        if self.pure_pursiut.is_last(current_pose):
+        if self.pure_pursuit.is_last(current_pose):
             self.offboard.set_hold_mode()
             self.pub_finished.publish()
             self.destroy_timer(self.timer)
