@@ -10,15 +10,15 @@ from std_srvs.srv import Trigger
 from tf2_ros import Buffer, TransformListener
 from tf2_geometry_msgs import PoseStamped
 
-from drone.scan_trajectory import ScanTrajectory
-from utils.environment import Environemnt
+from .drone.scan_trajectory import ScanTrajectory
+from .utils.environment import Environemnt
 
 class TrajectoryGenerator(Node):
     def __init__(self):
         super().__init__('trajectory_generator')
 
         self.tf_buffer = Buffer()
-        self.tf_listener = TransformListener(self.tf_buffer)
+        self.tf_listener = TransformListener(self.tf_buffer, self)
 
         self.declare_parameter('trajectory_link', 'start_pose')
         self.trajectory_link = self.get_parameter('trajectory_link').get_parameter_value().string_value
