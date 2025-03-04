@@ -32,6 +32,7 @@ setup(
             "environment_visualization = martian_mines.src.environment_visualization:main",
             "trajectory_tracker = martian_mines.src.trajectory_tracker:main",
             "detections_visualization = martian_mines.src.detections_visualization:main",
+            "mission_controller = martian_mines.src.mission_controller:main
         ],
     },
 )
