@@ -10,7 +10,7 @@ from std_srvs.srv import Trigger
 from tf2_ros import Buffer, TransformListener
 from image_geometry import PinholeCameraModel
 from tf2_geometry_msgs import PoseStamped
-from martian_mines_ros2.drone.offboard import Offboard
+from .drone.offboard import Offboard
 import numpy as np
 
 

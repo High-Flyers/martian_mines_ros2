@@ -10,8 +10,8 @@ from typing import List
 from vision_msgs.msg import BoundingBox2D
 from geometry_msgs.msg import PoseStamped
 
-from drone.offboard import Offboard
-from martian_mines.msg import FigureMsgList, FigureMsg, BoundingBoxLabeledList
+from .drone.offboard import Offboard
+from martian_mines_msgs.msg import FigureMsgList, FigureMsg, BoundingBoxLabeledList
 
 
 class States(Enum):
@@ -125,7 +125,7 @@ class MissionController(Node, Machine):
     def on_enter_FIGURE_LANDING(self, target_figure: FigureMsg):
         self.get_logger().info('State: FIGURE_LANDING')
 
-        def cb_figure_landing():because existing path cannot be
+        def cb_figure_landing():  #because existing path cannot be
             if self.bboxes.boxes:
                 self.pub_precision_landing_bbox.publish(self.bboxes.boxes[0].bbox)
 
