@@ -1,15 +1,16 @@
 import cv2
+import cv2.aruco
 import numpy as np
 from typing import List, Tuple
 from vision_msgs.msg import BoundingBox2D
 from martian_mines_msgs.msg import BoundingBoxLabeled
-from detectors.abstract_detector import AbstractDetector
+from .abstract_detector import AbstractDetector
 
 
 class ArucoDetector(AbstractDetector):
     def __init__(self, aruco_dict=cv2.aruco.DICT_ARUCO_ORIGINAL):
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(aruco_dict)
-        self.aruco_params = cv2.aruco.DetectorParameters_create()
+        self.aruco_params = cv2.aruco.DetectorParameters()
         self.corners = []
         self.ids = []
 
