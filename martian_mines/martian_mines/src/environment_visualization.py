@@ -6,8 +6,9 @@ from rclpy.node import Node
 from visualization_msgs.msg import MarkerArray, Marker
 from geometry_msgs.msg import Pose, Vector3
 from std_msgs.msg import Header, ColorRGBA
+from builtin_interfaces.msg import Duration  # Import the Duration message
 
-from utils.environment import Environemnt
+from .utils.environment import Environemnt
 
 
 class EnvironmentVisualization(Node):
@@ -43,7 +44,7 @@ class EnvironmentVisualization(Node):
                 action=Marker.ADD,
                 id=self.__get_marker_id(),
                 pose=self.__get_pose(x, y),
-                lifetime=rclpy.duration.Duration(seconds=0),
+                lifetime=Duration(sec=0, nanosec=0),
                 header=Header(frame_id="start_pose"),
                 color=color,
                 scale=Vector3(x=0.06, y=0.06, z=0.06),
@@ -67,7 +68,7 @@ class EnvironmentVisualization(Node):
                 action=Marker.ADD,
                 id=self.__get_marker_id(),
                 pose=self.__get_pose(x, y),
-                lifetime=rclpy.duration.Duration(seconds=0),
+                lifetime=Duration(sec=0, nanosec=0),
                 header=Header(frame_id="start_pose"),
                 color=ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0),
                 scale=Vector3(x=1.0, y=1.0, z=0.01),
@@ -81,7 +82,7 @@ class EnvironmentVisualization(Node):
             action=Marker.ADD,
             id=self.__get_marker_id(),
             pose=self.__get_pose(*self.env.barrel),
-            lifetime=rclpy.duration.Duration(seconds=0),
+            lifetime=Duration(sec=0, nanosec=0), 
             header=Header(frame_id="start_pose"),
             color=ColorRGBA(r=0.0, g=0.0, b=1.0, a=0.8),
             scale=Vector3(x=0.58, y=0.58, z=1.2),
