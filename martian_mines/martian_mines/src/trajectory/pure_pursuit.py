@@ -1,6 +1,6 @@
 import numpy as np
 
-from trajectory.trajectory import Trajectory, Waypoint, Sphere, pt_to_pt_distance
+from .trajectory import Trajectory, Waypoint, Sphere, pt_to_pt_distance
 
 
 def sgn(num: float) -> int:
