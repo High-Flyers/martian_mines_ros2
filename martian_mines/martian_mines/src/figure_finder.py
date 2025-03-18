@@ -9,8 +9,7 @@ from sensor_msgs.msg import Image, NavSatFix, CameraInfo
 from std_msgs.msg import Float64
 from std_srvs.srv import Trigger
 from message_filters import ApproximateTimeSynchronizer, Subscriber
-
-from .figure.figure import Figure
+from martian_mines.src.figure.figure import Figure
 from .figure_managment.figure_collector import FigureCollector
 from .color_detection import ColorDetection
 from .utils.bbox_mapper import BBoxMapper
@@ -25,14 +24,14 @@ class FigureFinder(Node):
         color_detection_config = os.path.join(
             package_path,
             self.declare_parameter(
-                "color_detection_config_file", "config/color_detection_config.yaml"
+                "color_detection_config_file", "config/color_detection.json"
             ).value,
         )
         self.color_detection = ColorDetection(color_detection_config)
         figure_operations_path = os.path.join(
             package_path,
             self.declare_parameter(
-                "figure_operations_config_file", "config/figure_operations_config.yaml"
+                "figure_operations_config_file", "config/figure_operations.yaml"
             ).value,
         )
         self.figure_operations_config = yaml.safe_load(open(figure_operations_path))

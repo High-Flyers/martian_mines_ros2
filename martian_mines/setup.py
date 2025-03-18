@@ -13,6 +13,7 @@ setup(
         ('share/' + package_name, ['package.xml']),
         ("share/" + package_name + "/launch", glob("launch/*.launch")),
         ("share/" + package_name + "/config", glob("config/*.yaml")),
+        ("share/" + package_name + "/config", glob("config/*.json")),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -32,7 +33,8 @@ setup(
             "environment_visualization = martian_mines.src.environment_visualization:main",
             "trajectory_tracker = martian_mines.src.trajectory_tracker:main",
             "detection_visualization = martian_mines.src.detection_visualization:main",
-            "mission_controller = martian_mines.src.mission_controller:main"
+            "mission_controller = martian_mines.src.mission_controller:main",
+            "tf_start_pose = martian_mines.src.tf_start_pose:main"
         ],
     },
 )
