@@ -35,11 +35,11 @@ ros2 run offboard offboard_example
   - [x] bbox_publisher
   - [x] detection
   - [x] detection visualization
-  - [x] environment_visualization
+  - [x] environment_visualization (less feedback)
   - [ ] figure_finder
   - [x] precision_landing
-  - [x] tf_start_pose
-  - [x] trajectory_generator
+  - [x] tf_start_pose (less feedback)
+  - [x] trajectory_generator (less feedback)
   - [x] trajectory_tracker
 
 
