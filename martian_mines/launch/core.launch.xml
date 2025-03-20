@@ -18,7 +18,7 @@
         <include file="$(find-pkg-share martian_mines)/launch/realsense.launch.xml"/>
 
         <!-- Launch MAVROS -->
-        <include file="$(find-pkg-share mavros)/launch/px4.launch.xml" namespace="uav0">
+        <include file="$(find-pkg-share mavros)/launch/px4.launch.xml">
             <arg name="fcu_url" value="udp://:14550@localhost:14550"/>
         </include>
 

@@ -17,6 +17,9 @@ RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
     ros-humble-vision-msgs \
     ros-humble-std-msgs \
     ros-humble-image-geometry \
+    ros-humble-launch \
+    ros-humble-launch-xml \
+    ros-humble-launch-ros \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install ultralytics dill pyrr shapely transitions matplotlib opencv-contrib-python cv_bridge
