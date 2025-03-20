@@ -2,6 +2,7 @@ import rclpy
 import os
 import yaml
 import cv2
+import json
 from ament_index_python.packages import get_package_share_directory  # Zamiana rospkg
 from rclpy.node import Node
 from cv_bridge import CvBridge
@@ -24,21 +25,28 @@ class FigureFinder(Node):
         color_detection_config = os.path.join(
             package_path,
             self.declare_parameter(
-                "color_detection_config_file", "config/color_detection.json"
+                "color_detection_config_file", "config/color_detection.json" #default path
             ).value,
         )
-        self.color_detection = ColorDetection(color_detection_config)
+        self.color_detection = ColorDetection(color_detection_config) #color detection reads parmas itself
+
         figure_operations_path = os.path.join(
             package_path,
             self.declare_parameter(
-                "figure_operations_config_file", "config/figure_operations.yaml"
+                "figure_operations_config_file", "config/figure_operations.yaml" #default path
             ).value,
         )
-        self.figure_operations_config = yaml.safe_load(open(figure_operations_path))
-        self.figure_collector = FigureCollector(
-            self.declare_parameter(
-                "figure_collector", "figure_collector_config.yaml"
-            ).value
+        self.figure_operations_config = yaml.safe_load(open(figure_operations_path)) #path argument  from file
+
+        json_figure_collector_params_path = os.path.join(package_path,self.declare_parameter( # varaible with json config for figure_coollector
+                                "figure_collector", "config/real.yaml" #default path
+                            ).value)
+        
+        figure_collector_params = yaml.safe_load(open(json_figure_collector_params_path))["figure_finder"]["figure_collector"] #params for f_g
+        print(figure_collector_params)
+
+        self.figure_collector = FigureCollector( #figure collector needs params as argument
+            figure_collector_params
         )
         self.processing = False
 
