@@ -10,8 +10,8 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-from drone.mavlink_telemetry import MavlinkTelemetry
-from utils.streamer import Streamer
+from .drone.mavlink_telemetry import MavlinkTelemetry
+from .utils.streamer import Streamer
 
 FPS = 30
 RESOLUTION = (1280, 720)

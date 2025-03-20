@@ -35,7 +35,8 @@ setup(
             "trajectory_tracker = martian_mines.src.trajectory_tracker:main",
             "detection_visualization = martian_mines.src.detection_visualization:main",
             "mission_controller = martian_mines.src.mission_controller:main",
-            "tf_start_pose = martian_mines.src.tf_start_pose:main"
+            "tf_start_pose = martian_mines.src.tf_start_pose:main",
+            "data_collector = martian_mines.src.data_collector:main"
         ],
     },
 )
