@@ -7,15 +7,17 @@ from rclpy.node import Node
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image, NavSatFix, CameraInfo
 from std_msgs.msg import Float64
-from std_srvs.srv import Trigger, TriggerResponse
+from std_srvs.srv import Trigger
 from message_filters import ApproximateTimeSynchronizer, Subscriber
 
-from figure.figure import Figure
-from figure_managment.figure_collector import FigureCollector
-from color_detection import ColorDetection
-from utils.bbox_mapper import BBoxMapper
-from martian_mines_ros2.msg import BoundingBoxLabeledList, FigureMsgList
+# from .figure.figure import Figure
 
+from .color_detection import ColorDetection
+
+from martian_mines_msgs.msg import BoundingBoxLabeledList, FigureMsgList
+#problem z importem
+from .figure_managment.figure_collector import FigureGroup
+from .utils.bbox_mapper import BBoxMapper #nie zaimplementowane
 
 class FigureFinder(Node):
     def __init__(self):

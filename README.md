@@ -36,7 +36,7 @@ ros2 run offboard offboard_example
   - [x] detection
   - [x] detection visualization
   - [ ] environment_visualization
-  - [ ] figure_finder
+  - [x] figure_finder
   - [ ] precision_landing
   - [ ] tf_start_pose
   - [ ] trajectory_generator
