@@ -1,15 +1,15 @@
 import rclpy
-from rclpy import Node
+from rclpy.node import Node
 
 import numpy as np
 import time
 
 from nav_msgs.msg import Path
 from std_msgs.msg import Empty
-from drone.offboard import Offboard
+from .drone.offboard import Offboard
 from geometry_msgs.msg import Point
-from trajectory.trajectory import Trajectory
-from trajectory.pure_pursuit import PurePursuit
+from .trajectory.trajectory import Trajectory
+from .trajectory.pure_pursuit import PurePursuit
 
 
 def point_to_np(point: Point):
@@ -36,7 +36,7 @@ class TrajectoryTracker(Node):
         self.pure_pursuit = PurePursuit(lookahead_distance=self.radius)
 
         self.pub_finished = self.create_publisher(Empty, 'trajectory_tracker/finished', 1)
-        self.sub_trajectory = self.create_subscription(Path, 'trajectory_tracker/path', self.callback_trajectory)
+        self.sub_trajectory = self.create_subscription(Path, 'trajectory_tracker/path', self.callback_trajectory, 10)
 
     def callback_trajectory(self, path: Path):
         self.trajectory = path_to_trajectory(path)
@@ -52,10 +52,10 @@ class TrajectoryTracker(Node):
         velocities = self.pure_pursuit.get_velocities(current_pose, self.velocity)
         self.offboard.fly_velocity(*velocities)
 
-        if self.pure_pursiut.is_last(current_pose):
+        if self.pure_pursuit.is_last(current_pose):
             self.offboard.set_hold_mode()
             self.pub_finished.publish()
-            self.timer.shutdown()
+            self.destroy_timer(self.timer)
 
 def main(args = None):
     rclpy.init(args=args)

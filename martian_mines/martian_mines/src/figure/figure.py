@@ -1,8 +1,7 @@
 import numpy as np
 
-from martian_mines_msgs.msg import BoundingBoxLabeled
-from martian_mines_msgs.msg import FigureMsg
-from ..figure.rejection_type import RejectionType
+from martian_mines_msgs.msg import BoundingBoxLabeled, FigureMsg
+from .rejection_type import RejectionType
 from typing import Tuple
 
 
