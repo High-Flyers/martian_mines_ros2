@@ -31,16 +31,17 @@ To execute offboard example, open terminal in vscode and run:
 ros2 run offboard offboard_example
 ```
 ### TODO  List
+### TODO  List
 - Nodes
   - [x] bbox_publisher
   - [x] detection
   - [x] detection visualization
-  - [ ] environment_visualization
-  - [ ] figure_finder
-  - [ ] precision_landing
-  - [ ] tf_start_pose
-  - [ ] trajectory_generator
-  - [ ] trajectory_tracker
+  - [x] environment_visualization (less feedback)
+  - [ ] figure_finder 
+  - [x] precision_landing
+  - [x] tf_start_pose (less feedback)
+  - [x] trajectory_generator (less feedback)
+  - [x] trajectory_tracker
 
 
 - Other class/files etc
