@@ -16,7 +16,7 @@ def generate_launch_description():
 
     # Include core.launch.xml
     core_launch = IncludeLaunchDescription(
-        AnyLaunchDescriptionSource(PathJoinSubstitution([martian_mines_dir, 'launch', 'core.launch.xml'])),
+        AnyLaunchDescriptionSource(PathJoinSubstitution([martian_mines_dir, 'launch', 'core.launch.py'])),
         launch_arguments={'real_world': LaunchConfiguration('real_world'),
                           'no_start_pose': LaunchConfiguration('no_start_pose')}.items()
     )
@@ -25,20 +25,20 @@ def generate_launch_description():
     uav0_nodes = [
         Node(
             package='martian_mines',
-            executable='precision_landing.py',
+            executable='precision_landing',
             name='precision_landing',
             output='screen',
             parameters=[PathJoinSubstitution([martian_mines_dir, 'config', 'aruco.yaml'])]
         ),
         Node(
             package='martian_mines',
-            executable='detection.py',
+            executable='detection',
             name='detection',
             output='screen'
         ),
         Node(
             package='martian_mines',
-            executable='bbox_publisher.py',
+            executable='bbox_publisher',
             name='land_on_target',
             output='screen'
         ),

@@ -23,14 +23,14 @@ def generate_launch_description():
     uav0 = GroupAction([
         Node(
             package="martian_mines",
-            executable="trajectory_generator.py",
+            executable="trajectory_generator",
             name="trajectory_generator",
             output="screen",
             parameters=[{"plot": LaunchConfiguration("plot_trajectory")}]
         ),
         Node(
             package="martian_mines",
-            executable="trajectory_tracker.py",
+            executable="trajectory_tracker",
             name="trajectory_tracker",
             output="screen",
             remappings=[("trajectory_tracker/path", "trajectory_generator/path")]
