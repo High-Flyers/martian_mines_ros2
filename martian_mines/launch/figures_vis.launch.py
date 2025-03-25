@@ -8,9 +8,6 @@ def generate_launch_description():
         # Push the namespace 'uav0' before launching the nodes
         launch_ros.actions.PushRosNamespace('uav0'),
 
-        # # UAV0 namespace
-        # launch_ros.actions.GroupAction(
-            # actions=[
             launch_ros.actions.Node(
                 package='martian_mines',
                 executable='detection_visualization',

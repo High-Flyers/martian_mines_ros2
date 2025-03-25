@@ -27,7 +27,7 @@ def generate_launch_description():
             executable='figure_finder',
             name='figure_finder',
             output='screen',
-            parameters=[PathJoinSubstitution()]
+            # parameters=[PathJoinSubstitution()]
         ),
         Node(
             package='martian_mines',
