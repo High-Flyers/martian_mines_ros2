@@ -69,6 +69,7 @@ def find_proper_figure_in_distance(fig_to_find: Figure, detected_figures: List[F
 class FigureCollector:
 
     def __init__(self, config):
+        # config to string ale powinno byc cos w stylu słownika (dict)
         self.num_thresh = config["group_num_instances"]
         self.dist_thresh = config["group_dist_thresh"]
         self.use_local_coords = config["use_local_coords"]

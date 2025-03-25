@@ -32,16 +32,16 @@ ros2 run offboard offboard_example
 ```
 ### TO DO  List
 - Launches
-  - [ ] core.launch
-  - [ ] example_precison_landing.launch
-  - [ ] example_trajectory_tracker.launch
+  - [x] core.launch 
+  - [ ] example_precison_landing.launch 
+  - [x] example_trajectory_tracker.launch 
   - [x] figure_finder.launch.py
   - [x] figures_vis.launch
-  - [ ] mission.launch
-  - [ ] realsense.launch
-  - [ ] rosbag_play.launch
-  - [ ] rosbag_record.launch
-  - [ ] rviz.launch
+  - [x] mission.launch 
+  - [ ] realsense.launch 
+  - [ ] rosbag_play.launch 
+  - [ ] rosbag_record.launch 
+  - [ ] rviz.launch 
 
 ### Throubleshoting
 If you will encounter a problem with "xcb" (GUI applications won't open) just run `xhost +local:docker` on your host machine.

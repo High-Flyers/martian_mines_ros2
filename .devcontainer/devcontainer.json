@@ -5,7 +5,7 @@
     "runArgs": [
         "--network=host",
         "--ipc=host",
-        // "--volume=${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}",
+        "--volume=/tmp/.X11-unix:/tmp/.X11-unix",
         // "--gpus=all",
         "--privileged"
     ],
