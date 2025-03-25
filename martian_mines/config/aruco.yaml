@@ -1,4 +1,5 @@
-real_world: false
+#real_world: false
 detection:
-  nn_model_path: nn_models/best_barrel_unity.pt
-  detector: aruco
+  ros__parameters:
+    nn_model_path: nn_models/best_barrel_unity.pt
+    detector: aruco

@@ -1,4 +1,4 @@
-real_world: true
+#real_world: true
 
 figure_finder:
   ros__parameters:
@@ -19,4 +19,4 @@ tf_start_pose:
     drone_z_offset: -0.2
 
 #additional settings
-upload_data: true
+#upload_data: true

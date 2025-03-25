@@ -19,4 +19,4 @@ tf_start_pose:
     drone_z_offset: 0.0
 
 #additional settings
-upload_data: true
+#upload_data: true
