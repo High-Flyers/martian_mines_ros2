@@ -27,7 +27,9 @@ def generate_launch_description():
             executable='figure_finder',
             name='figure_finder',
             output='screen',
-            # parameters=[PathJoinSubstitution([martian_mines_dir, 'config', 'aruco.yaml'])]
+
+            # parameters=[PathJoinSubstitution()]
+            
         ),
         Node(
             package='martian_mines',
