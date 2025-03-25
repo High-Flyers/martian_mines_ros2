@@ -6,8 +6,8 @@ import cv2
 from sensor_msgs.msg import Image, CompressedImage
 from martian_mines_msgs.msg import BoundingBoxLabeledList
 from cv_bridge import CvBridge, CvBridgeError
-from martian_mines.src.detectors.aruco_detector import ArucoDetector
-from martian_mines.src.detectors.yolo_detector import YoloDetector
+from .detectors.aruco_detector import ArucoDetector
+from .detectors.yolo_detector import YoloDetector
 
 
 class Detection(Node):
@@ -18,9 +18,9 @@ class Detection(Node):
 
         self.pub_bboxes = self.create_publisher(BoundingBoxLabeledList, "detection/bboxes", 10)
         self.pub_visualization = self.create_publisher(CompressedImage, "detection/image/compressed", 2)
-
-        self.declare_parameter('detector', 'aruco')  # Domyślnie 'aruco'
+        self.declare_parameter('detector',"aruco")
         detector = self.get_parameter('detector').get_parameter_value().string_value
+
         if detector == "aruco":
             self.detector = ArucoDetector()
         elif detector == "yolo":

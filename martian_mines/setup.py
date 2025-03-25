@@ -11,8 +11,10 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ("share/" + package_name + "/launch", glob("launch/*.launch.xml")),
         ("share/" + package_name + "/launch", glob("launch/*.launch.py")),
         ("share/" + package_name + "/config", glob("config/*.yaml")),
+        ("share/" + package_name + "/config", glob("config/*.json")),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -31,7 +33,10 @@ setup(
             "report_uploader = martian_mines.src.utils.report_uploader:main",
             "environment_visualization = martian_mines.src.environment_visualization:main",
             "trajectory_tracker = martian_mines.src.trajectory_tracker:main",
-            "detections_visualization = martian_mines.src.detections_visualization:main",
+            "detection_visualization = martian_mines.src.detection_visualization:main",
+            "mission_controller = martian_mines.src.mission_controller:main",
+            "tf_start_pose = martian_mines.src.tf_start_pose:main",
+            "data_collector = martian_mines.src.data_collector:main"
         ],
     },
 )
