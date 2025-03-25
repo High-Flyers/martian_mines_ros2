@@ -31,7 +31,7 @@ class FigureFinder(Node):
             ).value,
         )
         self.color_detection = ColorDetection(color_detection_config) #color detection reads parmas itself
-
+        
         figure_operations_path = os.path.join(
             package_path,
             self.declare_parameter(
@@ -43,8 +43,8 @@ class FigureFinder(Node):
         json_figure_collector_params_path = os.path.join(package_path,self.declare_parameter( # varaible with json config for figure_coollector
                                 "figure_collector", "config/real.yaml" #default path
                             ).value)
-        
-        figure_collector_params = yaml.safe_load(open(json_figure_collector_params_path))["figure_finder"]["figure_collector"] #params for f_g
+
+        figure_collector_params = yaml.safe_load(open(json_figure_collector_params_path))["figure_finder"]["ros__parameters"]["figure_collector"] #params for f_g
 
         self.figure_collector = FigureCollector( #figure collector needs params as argument
             figure_collector_params
