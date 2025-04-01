@@ -22,7 +22,7 @@ def generate_launch_description():
 
     environment_visualization = Node(
         package="martian_mines",
-        executable="environment_visualization.py",
+        executable="environment_visualization",
         name="environment_visualization",
         output="screen"
     )
