@@ -29,15 +29,18 @@ def generate_launch_description():
         ])
     )
     
-    player_node = Node(
-        package="rosbag2",
-        executable="play",
-        name="player",
-        output="screen",
-        arguments=["--clock", "-l", PathJoinSubstitution([
+    player_node = ExecuteProcess(
+    cmd=[
+        FindExecutable(name="ros2"),
+        "bag", "play",
+        PathJoinSubstitution([
             get_package_share_directory("martian_mines"), "data", bag_file
-        ])]
+        ]),
+        "--clock", "-l"
+    ],
+    output="screen"
     )
+
     
     uav0_group = GroupAction([
         Node(
