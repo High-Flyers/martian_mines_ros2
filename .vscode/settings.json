@@ -9,4 +9,5 @@
         "/opt/ros/humble/lib/python3.10/site-packages",
         "/opt/ros/humble/local/lib/python3.10/dist-packages"
     ],
-    "cmake.sourceDirectory": "/home/highflyers/ws/src/martian_mines_ros2/martian_mines_msgs"
+    "cmake.sourceDirectory": "/home/karol/Desktop/repos/martian_mines_ros2/martian_mines_msgs"
+}
