@@ -59,7 +59,7 @@ def generate_launch_description():
         ExecuteProcess(
         cmd=[
             FindExecutable(name="ros2"),
-            "service", "call", "--wait",
+            "service", "call",
             "figure_finder/start",
             "std_srvs/srv/Trigger"
             ],
