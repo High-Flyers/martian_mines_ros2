@@ -31,7 +31,8 @@ def generate_launch_description():
             package="martian_mines", executable="precision_landing", output="screen"
         ),
         launch_ros.actions.Node(
-            package="martian_mines", executable="trajectory_generator", output="screen"
+            package="martian_mines", executable="trajectory_generator", output="screen", 
+            remappings=[("camera/camera_info", "camera_info")]
         ),
         launch_ros.actions.Node(
             package="martian_mines", executable="trajectory_tracker", output="screen",
