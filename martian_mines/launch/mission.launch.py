@@ -28,26 +28,27 @@ def generate_launch_description():
         launch.actions.DeclareLaunchArgument("no_start_pose", default_value="false"),
 
         launch_ros.actions.Node(
-            package="martian_mines", executable="precision_landing", name="precision_landing", output="screen"
+            package="martian_mines", executable="precision_landing", output="screen"
         ),
         launch_ros.actions.Node(
-            package="martian_mines", executable="trajectory_generator", name="trajectory_generator", output="screen"
+            package="martian_mines", executable="trajectory_generator", output="screen", 
+            remappings=[("camera/camera_info", "camera_info")]
         ),
         launch_ros.actions.Node(
-            package="martian_mines", executable="trajectory_tracker", name="trajectory_tracker", output="screen",
+            package="martian_mines", executable="trajectory_tracker", output="screen",
             remappings=[("trajectory_tracker/path", "trajectory_generator/path")]
         ),
         launch_ros.actions.Node(
-            package="martian_mines", executable="detection", name="detection", output="screen"
+            package="martian_mines", executable="detection", output="screen"
         ),
         launch_ros.actions.Node(
-            package="martian_mines", executable="figure_finder", name="figure_finder", output="screen"
+            package="martian_mines", executable="figure_finder", output="screen"
         ),
         launch_ros.actions.Node(
-            package="martian_mines", executable="report_uploader", name="report_uploader", output="screen"
+            package="martian_mines", executable="report_uploader", output="screen"
         ),
         launch_ros.actions.Node(
-            package="martian_mines", executable="mission_controller", name="mission_controller", output="screen"
+            package="martian_mines", executable="mission_controller", output="screen"
         )
     ])
 

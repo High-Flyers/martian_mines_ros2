@@ -61,7 +61,7 @@ class TrajectoryGenerator(Node):
 
         environment = Environemnt(0, 0)
         polygon_coords = [environment.left_lower_ball, environment.left_upper_ball, environment.right_upper_ball, environment.right_lower_ball]
-        trajectory = ScanTrajectory(polygon_coords, self.camera_model.fovX(), self.camera_model.fovY())
+        trajectory = ScanTrajectory(polygon_coords, self.camera_model.fx(), self.camera_model.fy())
         trajectory.set_altitude(altitude)
         trajectory.set_overlap(overlap)
         trajectory.set_offset(offset)

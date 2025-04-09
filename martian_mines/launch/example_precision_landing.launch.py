@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -22,7 +22,7 @@ def generate_launch_description():
     )
 
     # Define UAV0 nodes
-    uav0_nodes = [
+    uav0_nodes = GroupAction([
         Node(
             package='martian_mines',
             executable='precision_landing',
@@ -42,26 +42,27 @@ def generate_launch_description():
             name='land_on_target',
             output='screen'
         ),
-    ]
+    ])
 
     # Conditional remaps (in real-world mode)
-    remap_real_world = [
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='remap_camera',
-            arguments=['camera/image_raw', 'color/image_raw']
-        ),
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='remap_camera_info',
-            arguments=['camera/camera_info', 'color/camera_info']
-        )
-    ]
+    #remap_real_world = [
+    #    Node(
+    #        package='tf2_ros',
+    #        executable='static_transform_publisher',
+    #        name='remap_camera',
+    #        arguments=['camera/image_raw', 'color/image_raw']
+    #    ),
+    #    Node(
+    #        package='tf2_ros',
+    #        executable='static_transform_publisher',
+    #        name='remap_camera_info',
+    #        arguments=['camera/camera_info', 'color/camera_info']
+    #    )
+    #]
 
     return LaunchDescription([
         real_world_arg,
         no_start_pose_arg,
-        core_launch
-    ] + uav0_nodes + remap_real_world if LaunchConfiguration('real_world') else uav0_nodes)
+        core_launch,
+        uav0_nodes
+    ])
