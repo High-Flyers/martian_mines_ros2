@@ -7,6 +7,7 @@ ARG USER_GID=${USER_UID}
 
 # Install general dependencies
 RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
+    openssh-client \
     build-essential \
     cmake \
     ros-dev-tools \
