@@ -1,5 +1,10 @@
 # Martian Mines ROS2
 
+Workflow:
+1) Create new branch fork from develop branch with problem name,
+2) solve problem,
+3) create pull request to develop. 
+
 ### Requirements
 - **Docker** (Docker CLI recommended)
   - Add your user to the Docker group to grant the necessary permissions; otherwise, you must prefix commands with sudo.
