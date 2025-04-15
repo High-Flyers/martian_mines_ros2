@@ -21,7 +21,7 @@ def generate_launch_description():
     # )
     
     set_param_mavros = launch_ros.actions.SetParameter(
-        name='uav0/mavros/local_position/tf/send', value=True
+        name='mavros/local_position/tf/send', value=True
     )
     
     static_tf = launch_ros.actions.Node(

@@ -33,7 +33,7 @@ class MissionController(Node, Machine):
         Node.__init__(self, 'mission_controller')
         self.__init_state_machine()
 
-        self.offboard = Offboard()
+        self.offboard = Offboard(self)
         self.target_figures: List[FigureMsg] = None
         self.bboxes = BoundingBoxLabeledList()
         self.local_home_pose = PoseStamped()

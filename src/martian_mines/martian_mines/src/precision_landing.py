@@ -55,7 +55,7 @@ class PrecisionLanding(Node):
         super().__init__('precision_landing_node')
 
         self.camera_link = self.declare_parameter('camera_link', 'camera_link').value
-        self.offboard = Offboard()
+        self.offboard = Offboard(self)
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.camera_model = PinholeCameraModel()

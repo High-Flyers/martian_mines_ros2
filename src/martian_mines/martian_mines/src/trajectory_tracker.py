@@ -31,7 +31,7 @@ class TrajectoryTracker(Node):
         self.radius = self.get_parameter('radius').get_parameter_value().integer_value
         self.velocity = self.get_parameter('velocity').get_parameter_value().integer_value
 
-        self.offboard = Offboard()
+        self.offboard = Offboard(self)
         self.trajectory = Trajectory()
         self.pure_pursuit = PurePursuit(lookahead_distance=self.radius)
 

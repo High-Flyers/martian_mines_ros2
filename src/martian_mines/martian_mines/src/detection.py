@@ -15,7 +15,6 @@ class Detection(Node):
         super().__init__('detection')
 
         self.bridge = CvBridge()
-
         self.pub_bboxes = self.create_publisher(BoundingBoxLabeledList, "detection/bboxes", 10)
         self.pub_visualization = self.create_publisher(CompressedImage, "detection/image/compressed", 2)
         self.declare_parameter('detector',"aruco")

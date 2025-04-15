@@ -7,6 +7,7 @@ ARG USER_GID=${USER_UID}
 
 # Install general dependencies
 RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
+    openssh-client \
     build-essential \
     cmake \
     ros-dev-tools \
@@ -54,6 +55,7 @@ RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" && \
 
 # Copy simulation package to workspace
 WORKDIR $ROS_WORKSPACE/src
+RUN pwd
 COPY . martian_mines_ros2
 
 WORKDIR $ROS_WORKSPACE

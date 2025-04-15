@@ -88,7 +88,7 @@ Visualization Manager:
       Value: true
     - Class: rviz2/Image
       Enabled: true
-      Image Topic: /uav0/detection/image
+      Image Topic: /detection/image
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -106,12 +106,12 @@ Visualization Manager:
       Name: Debug Figure Position
       Queue Size: 10
       Radius: 0.02
-      Topic: /uav0/detection/debug_figure_pos
+      Topic: /detection/debug_figure_pos
       Unreliable: false
       Value: true
     - Class: rviz2/Image
       Enabled: true
-      Image Topic: /uav0/color/image_raw
+      Image Topic: /color/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -123,7 +123,7 @@ Visualization Manager:
       Value: true
     - Class: rviz2/MarkerArray
       Enabled: true
-      Marker Topic: /uav0/detections_visualization/markers
+      Marker Topic: /detections_visualization/markers
       Name: Detection Markers
       Namespaces:
         "": true
