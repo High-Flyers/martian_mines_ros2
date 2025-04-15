@@ -4,10 +4,6 @@ import launch_ros.actions
 
 def generate_launch_description():
     return launch.LaunchDescription([
-
-        # Push the namespace 'uav0' before launching the nodes
-        launch_ros.actions.PushRosNamespace('uav0'),
-
             launch_ros.actions.Node(
                 package='martian_mines',
                 executable='detection_visualization',

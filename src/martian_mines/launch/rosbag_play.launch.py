@@ -4,6 +4,7 @@ from launch.actions import DeclareLaunchArgument, GroupAction, ExecuteProcess, S
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, FindExecutable
 from launch_ros.actions import Node, SetParameter
 from ament_index_python.packages import get_package_share_directory
+import launch_ros.actions
 
 def generate_launch_description():
     real_world_arg = DeclareLaunchArgument("real_world", default_value="true")
@@ -43,6 +44,7 @@ def generate_launch_description():
 
     
     uav0_group = GroupAction([
+        launch_ros.actions.PushRosNamespace('uav0'),
         Node(
             package="martian_mines",
             executable="detection",

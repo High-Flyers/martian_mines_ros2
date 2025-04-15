@@ -23,11 +23,13 @@ class TrajectoryGenerator(Node):
         self.declare_parameter('trajectory_link', 'start_pose')
         self.trajectory_link = self.get_parameter('trajectory_link').get_parameter_value().string_value
 
-        self.subscription = self.create_subscription(CameraInfo,'camera/camera_info', self.get_camera_model, 15)
+        self.subscription = self.create_subscription(CameraInfo,'/camera_info', self.get_camera_model, 15)
 
         self.camera_model = PinholeCameraModel()
         self.camera_info_received = False
+        self.get_logger().info(f'Waiting for camera info on topic {self.subscription.topic_name}...')
         self.wait_for_camera_info()
+        self.get_logger().info('Camera info received!')
 
         self.declare_parameter('altitude', 4.0)
         self.declare_parameter('overlap', 0.1)
@@ -35,13 +37,16 @@ class TrajectoryGenerator(Node):
 
         self.scan_trajectory = self.create_scan_trajectory()
 
+
+        self.get_logger().info(f'Waiting for transform from {self.trajectory_link} to map...')
         self.wait_for_transform()
+        self.get_logger().info(f'Transform from {self.trajectory_link} to map received!')
         self.service_generate = self.create_service(Trigger, 'trajectory_generator/generate', self.generate_trajectory)
         self.pub_trajectory = self.create_publisher(Path, 'trajectory_generator/path', 1)
 
     def wait_for_transform(self):
         while rclpy.ok():
-            if self.tf_buffer.can_transform(self.trajectory_link, "map", rclpy.time.Time(), rclpy.duration.Duration(1.0)):
+            if self.tf_buffer.can_transform(self.trajectory_link, "map", rclpy.time.Time(), rclpy.duration.Duration(seconds=1.0)):
                 break
     
     def get_camera_model(self, msg):

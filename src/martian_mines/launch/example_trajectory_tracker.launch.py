@@ -5,6 +5,7 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, Grou
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, FindExecutable
 from launch_ros.actions import Node
+import launch_ros.actions
 
 
 def generate_launch_description():
@@ -21,6 +22,7 @@ def generate_launch_description():
     )
 
     uav0 = GroupAction([
+        launch_ros.actions.PushRosNamespace("uav0"),
         Node(
             package="martian_mines",
             executable="trajectory_generator",
