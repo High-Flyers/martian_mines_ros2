@@ -1,186 +1,175 @@
+import numpy as np
+
 import rclpy
 from rclpy.node import Node
-from rclpy.duration import Duration
-from geometry_msgs.msg import PoseStamped, TwistStamped
-from mavros_msgs.msg import ExtendedState
-from mavros_msgs.srv import CommandBool, SetMode, ParamSet
-from std_msgs.msg import Float64
-import numpy as np
-from tf2_ros import TransformListener, Buffer
-from tf2_geometry_msgs import do_transform_pose
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
+
+from px4_msgs.msg import (
+    TrajectorySetpoint,
+    VehicleLocalPosition,
+    VehicleStatus,
+    OffboardControlMode,
+    VehicleCommand,
+    VehicleLandDetected,
+)
 
 
-def point_to_pose_stamped(x, y, z, frame_id: str ="map") -> PoseStamped:
-    msg = PoseStamped()
-    msg.header.frame_id = frame_id
-    msg.header.stamp = rclpy.time.Time().to_msg()
-    msg.pose.position.x = x
-    msg.pose.position.y = y
-    msg.pose.position.z = z
-    return msg
+def ned_to_enu(n, e, d):
+    return (float(e), float(n), float(-d))
 
 
-def pose_stamped_to_point(pose: PoseStamped):
-    return pose.pose.position.x, pose.pose.position.y, pose.pose.position.z
+def enu_to_ned(e, n, u):
+    return (float(n), float(e), float(-u))
 
 
 class Offboard:
     def __init__(self, node: Node) -> None:
+        px4_qos = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+        )
+
         self.node = node
 
-        # TF Buffer and Listener
-        self.tf_buffer = Buffer()
-        self.tf_listener = TransformListener(self.tf_buffer, self.node)
-
         # Publishers
-        self.pub_setpoint_local = self.node.create_publisher(PoseStamped, 'mavros/setpoint_position/local', 1)
-        self.pub_setpoint_velocity = self.node.create_publisher(TwistStamped, 'mavros/setpoint_velocity/cmd_vel', 1)
+        self._pub_trajectory_setpoint = self.node.create_publisher(
+            TrajectorySetpoint, "fmu/in/trajectory_setpoint", px4_qos
+        )
+        self._pub_offboard_control_mode = self.node.create_publisher(
+            OffboardControlMode, "fmu/in/offboard_control_mode", px4_qos
+        )
+        self._pub_vehicle_command = self.node.create_publisher(
+            VehicleCommand, "fmu/in/vehicle_command", px4_qos
+        )
 
         # Subscribers
-        self.sub_local_pos = self.node.create_subscription(PoseStamped, 'mavros/local_position/pose', self.callback_local_pos, 10)
-        self.sub_extended_state = self.node.create_subscription(ExtendedState, 'mavros/extended_state', self.callback_extended_state, 10)
-        self.sub_rel_alt = self.node.create_subscription(Float64, 'mavros/global_position/rel_alt', self.callback_rel_alt, 10)
+        self._sub_vehicle_local_position = self.node.create_subscription(
+            VehicleLocalPosition,
+            "fmu/out/vehicle_local_position",
+            self.vehicle_local_position_cb,
+            px4_qos,
+        )
+        self._sub_vehicle_status = self.node.create_subscription(
+            VehicleStatus,
+            "fmu/out/vehicle_status",
+            self.vehicle_status_cb,
+            px4_qos,
+        )
+        self._sub_vehicle_land_detected = self.node.create_subscription(
+            VehicleLandDetected,
+            "fmu/out/vehicle_land_detected",
+            self.vehicle_land_detected_cb,
+            px4_qos
+        )
 
-        # Services
-        self.client_arming = self.node.create_client(CommandBool, 'mavros/cmd/arming')
-        self.client_set_mode = self.node.create_client(SetMode, 'mavros/set_mode')
-        self.client_param_set = self.node.create_client(ParamSet, 'mavros/param/set')
+        self._vehicle_local_position = VehicleLocalPosition()
+        self._vehicle_status = VehicleStatus()
+        self._vehicle_land_detected = VehicleLandDetected()
 
-        # State Variables
-        self.local_pos = PoseStamped()
-        self.extended_state = ExtendedState()
-        self.rel_alt: float = 0.0
+        self.timer = self.node.create_timer(0.1, self.timer_callback)
 
-        self.node.get_logger().info("Offboard module initialized")
+    def vehicle_local_position_cb(self, msg: VehicleLocalPosition) -> None:
+        self._vehicle_local_position = msg
+
+    def vehicle_status_cb(self, msg: VehicleStatus) -> None:
+        self._vehicle_status = msg
+
+    def vehicle_land_detected_cb(self, msg: VehicleLandDetected) -> None:
+        self._vehicle_land_detected = msg
 
     def start(self):
-        self.arm()
         self.set_offboard_mode()
+        self.arm()
 
     def takeoff(self, height):
         curr_position = self.local_pos.pose.position
         self.fly_point(curr_position.x, curr_position.y, height)
 
     def arm(self):
-        if not self.client_arming.wait_for_service(timeout_sec=5.0):
-            self.node.get_logger().error('Arming service not available')
-            return False
-
-        request = CommandBool.Request()
-        request.value = True
-        future = self.client_arming.call_async(request)
-        rclpy.spin_until_future_complete(self.node, future)
-        return future.result().success
+        self.publish_vehicle_command(
+            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=1.0
+        )
 
     def disarm(self):
-        if not self.client_arming.wait_for_service(timeout_sec=5.0):
-            self.node.get_logger().error('Arming service not available')
-            return False
-
-        request = CommandBool.Request()
-        request.value = False
-        future = self.client_arming.call_async(request)
-        rclpy.spin_until_future_complete(self.node, future)
-        return future.result().success
+        self.publish_vehicle_command(
+            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=0.0
+        )
 
     def land(self):
-        request = SetMode.Request()
-        request.custom_mode = "AUTO.LAND"
-        future = self.client_set_mode.call_async(request)
-        rclpy.spin_until_future_complete(self.node, future)
-        return future.result().mode_sent
+        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
 
     def return_home(self):
-        request = SetMode.Request()
-        request.custom_mode = "AUTO.RTL"
-        future = self.client_set_mode.call_async(request)
-        rclpy.spin_until_future_complete(self.node, future)
-        return future.result().mode_sent
-
-    def set_mission_mode(self):
-        request = SetMode.Request()
-        request.custom_mode = "AUTO.MISSION"
-        future = self.client_set_mode.call_async(request)
-        rclpy.spin_until_future_complete(self.node, future)
-        return future.result().mode_sent
+        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_RETURN_TO_LAUNCH)
 
     def set_hold_mode(self):
-        request = SetMode.Request()
-        request.custom_mode = "AUTO.LOITER"
-        future = self.client_set_mode.call_async(request)
-        rclpy.spin_until_future_complete(self.node, future)
-        return future.result().mode_sent
+        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 2.0)
 
     def set_offboard_mode(self):
-        request = SetMode.Request()
-        request.custom_mode = "OFFBOARD"
-        future = self.client_set_mode.call_async(request)
-        rclpy.spin_until_future_complete(self.node, future)
-        return future.result().mode_sent
-
-    def set_precision_landing_mode(self):
-        request = SetMode.Request()
-        request.custom_mode = "AUTO.PRECLAND"
-        future = self.client_set_mode.call_async(request)
-        rclpy.spin_until_future_complete(self.node, future)
-        return future.result().mode_sent
+        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 6.0)
 
     def is_takeoff_finished(self, height, epsilon=0.1):
-        curr_position = self.local_pos.pose.position
-        return self.is_point_reached(curr_position.x, curr_position.y, height, epsilon=epsilon)
+        curr_position = self._vehicle_local_position
+        return self.is_point_reached(
+            curr_position.x, curr_position.y, height, epsilon=epsilon
+        )
 
     def is_point_reached(self, x, y, z, frame_id="map", epsilon=0.1):
-        pose = point_to_pose_stamped(x, y, z, frame_id)
-
-        if frame_id != "map":
-            pose = self.tf_buffer.transform(pose, "map", rclpy.time.Time())  # still double-check needed
-
-        x, y, z = pose_stamped_to_point(pose)
-        cx, cy, cz = pose_stamped_to_point(self.local_pos)
-        distance = np.linalg.norm([x - cx, y - cy, z - cz])
+        distance = np.linalg.norm(
+            [
+                x - self._vehicle_local_position.x,
+                y - self._vehicle_local_position.y,
+                z - self._vehicle_local_position.z,
+            ]
+        )
         return distance < epsilon
 
     def is_landed(self):
-        return self.extended_state.landed_state == ExtendedState.LANDED_STATE_ON_GROUND
+        return self._vehicle_land_detected.landed
 
-    def fly_point(self, x, y, z, frame_id="map"):
-        pose = point_to_pose_stamped(x, y, z, frame_id)
-        if frame_id != "map":
-            pose = self.tf_buffer.transform(pose, "map", rclpy.time.Time())
+    def fly_point(self, x, y, z):
+        msg = TrajectorySetpoint()
+        msg.position = enu_to_ned(x, y, z)
+        msg.timestamp = rclpy.time.Time().to_msg()
+        self._pub_trajectory_setpoint.publish(msg)
 
-        self.pub_setpoint_local.publish(pose)
+    def fly_velocity(self, vx, vy, vz, yaw=0.0):
+        msg = TrajectorySetpoint()
+        msg.velocity = enu_to_ned(vx, vy, vz)
+        msg.timestamp = rclpy.time.Time().to_msg()
+        self._pub_trajectory_setpoint.publish(msg)
 
-    def fly_velocity(self, vx, vy, vz, yaw_rate=0.0):
-        msg = TwistStamped()
-        msg.twist.linear.x = vx
-        msg.twist.linear.y = vy
-        msg.twist.linear.z = vz
-        msg.twist.angular.z = yaw_rate
-        msg.header.stamp = rclpy.time.Time().to_msg()
-        msg.header.frame_id = "map"
+    def timer_callback(self):
+        if self._vehicle_status.nav_state != VehicleStatus.NAVIGATION_STATE_OFFBOARD:
+            return
 
-        self.pub_setpoint_velocity.publish(msg)
+        self.publish_offboard_control_heartbeat_signal()
 
-    def callback_local_pos(self, msg: PoseStamped):
-        self.local_pos = msg
+    def publish_offboard_control_heartbeat_signal(self):
+        msg = OffboardControlMode()
+        msg.position = True
+        msg.velocity = True
+        msg.acceleration = True
+        msg.attitude = False
+        msg.body_rate = False
+        msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+        self._pub_offboard_control_mode.publish(msg)
 
-    def callback_extended_state(self, msg: ExtendedState):
-        self.extended_state = msg
-
-    def callback_rel_alt(self, msg: Float64):
-        self.rel_alt = msg.data
-
-    def set_param(self, name: str, value) -> ParamSet.Response:
-        request = ParamSet.Request()
-        request.param_id = name
-
-        if isinstance(value, int):
-            request.value.integer = value
-        elif isinstance(value, float):
-            request.value.real = value
-        else:
-            raise ValueError(f"Parameter {name} value must be int or float! Got {type(value)}")
-
-        future = self.client_param_set.call_async(request)
-        rclpy.spin_until_future_complete(self.node, future)
-        return future.result()
+    def publish_vehicle_command(self, command, **params) -> None:
+        msg = VehicleCommand()
+        msg.command = command
+        msg.param1 = params.get("param1", 0.0)
+        msg.param2 = params.get("param2", 0.0)
+        msg.param3 = params.get("param3", 0.0)
+        msg.param4 = params.get("param4", 0.0)
+        msg.param5 = params.get("param5", 0.0)
+        msg.param6 = params.get("param6", 0.0)
+        msg.param7 = params.get("param7", 0.0)
+        msg.target_system = 1
+        msg.target_component = 1
+        msg.source_system = 1
+        msg.source_component = 1
+        msg.from_external = True
+        msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+        self._pub_vehicle_command.publish(msg)
