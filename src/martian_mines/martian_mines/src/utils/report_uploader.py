@@ -1,10 +1,6 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
-import message_filters
-
-from sensor_msgs.msg import NavSatFix
-from std_msgs.msg import Float64
 
 from px4_msgs.msg import VehicleGlobalPosition, VehicleLocalPosition
 
