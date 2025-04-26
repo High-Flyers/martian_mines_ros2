@@ -1,29 +1,43 @@
-import rclpy
-from rclpy.node import Node
 import os
 import numpy as np
 import cv2
-from sensor_msgs.msg import Image, CompressedImage
-from martian_mines_msgs.msg import BoundingBoxLabeledList
 from cv_bridge import CvBridge, CvBridgeError
+
+from ament_index_python import get_package_share_directory
+
+import rclpy
+from rclpy.node import Node
+
+from sensor_msgs.msg import Image, CompressedImage
+
+from martian_mines_msgs.msg import BoundingBoxLabeledList
 from .detectors.aruco_detector import ArucoDetector
 from .detectors.yolo_detector import YoloDetector
 
 
 class Detection(Node):
     def __init__(self):
-        super().__init__('detection')
+        super().__init__("detection")
 
         self.bridge = CvBridge()
-        self.pub_bboxes = self.create_publisher(BoundingBoxLabeledList, "detection/bboxes", 10)
-        self.pub_visualization = self.create_publisher(CompressedImage, "detection/image/compressed", 2)
-        self.declare_parameter('detector',"aruco")
-        detector = self.get_parameter('detector').get_parameter_value().string_value
+        self.pub_bboxes = self.create_publisher(
+            BoundingBoxLabeledList, "detection/bboxes", 10
+        )
+        self.pub_visualization = self.create_publisher(
+            CompressedImage, "detection/image/compressed", 2
+        )
+        self.declare_parameter("detector", "aruco")
+        self.declare_parameter("nn_model_path", "nn_models/best_barrel_unity.pt")
+
+        detector = self.get_parameter("detector").get_parameter_value().string_value
 
         if detector == "aruco":
             self.detector = ArucoDetector()
         elif detector == "yolo":
-            model_path = os.path.join(self.get_package_share_directory('martian_mines'), self.get_parameter('nn_model_path').get_parameter_value().string_value)
+            model_path = os.path.join(
+                get_package_share_directory("martian_mines"),
+                self.get_parameter("nn_model_path").get_parameter_value().string_value,
+            )
             self.detector = YoloDetector(model_path)
         else:
             raise ValueError(f"Unknown detector: {detector}")
@@ -36,7 +50,7 @@ class Detection(Node):
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.format = "jpeg"
         image_np = cv2.resize(image_np, (640, 360))
-        msg.data = np.array(cv2.imencode('.jpg', image_np)[1]).tobytes()
+        msg.data = np.array(cv2.imencode(".jpg", image_np)[1]).tobytes()
         self.pub_visualization.publish(msg)
 
     def image_callback(self, data: Image):
@@ -71,5 +85,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

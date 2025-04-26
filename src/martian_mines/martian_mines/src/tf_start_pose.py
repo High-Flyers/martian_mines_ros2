@@ -47,14 +47,14 @@ class TfStartPose(Node):
         t.header.frame_id = "map"
         t.header.stamp = self.get_clock().now().to_msg()
         t.child_frame_id = "start_pose"
-        t.transform.translation.x = self.odometry.position[0]
-        t.transform.translation.y = self.odometry.position[1]
-        t.transform.translation.z = self.odometry.position[2] + self.drone_z_offset
+        t.transform.translation.x = float(self.odometry.position[0])
+        t.transform.translation.y = float(self.odometry.position[1])
+        t.transform.translation.z = float(self.odometry.position[2] + self.drone_z_offset)
 
-        t.transform.rotation.x = self.odometry.q[1]
-        t.transform.rotation.y = self.odometry.q[2]
-        t.transform.rotation.z = self.odometry.q[3]
-        t.transform.rotation.w = self.odometry.q[0]
+        t.transform.rotation.x = float(self.odometry.q[1])
+        t.transform.rotation.y = float(self.odometry.q[2])
+        t.transform.rotation.z = float(self.odometry.q[3])
+        t.transform.rotation.w = float(self.odometry.q[0])
 
         self.get_logger().info(f"Sending transform: \n{t}")
         self.broadcaster.sendTransform(t)
