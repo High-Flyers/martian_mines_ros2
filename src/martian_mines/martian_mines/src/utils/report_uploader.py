@@ -1,9 +1,12 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 import message_filters
 
 from sensor_msgs.msg import NavSatFix
 from std_msgs.msg import Float64
+
+from px4_msgs.msg import VehicleGlobalPosition, VehicleLocalPosition
 
 from martian_mines_msgs.msg import FigureMsgList, FigureMsg
 from .coords_scaler import CoordinateScaler
@@ -17,26 +20,38 @@ class UploadNode(Node):
         self.drone_uploader = Uploader("http://91.227.41.24:3001/drones")
         self.figure_uploader = Uploader("http://91.227.41.24:3001/samples")
 
-        global_pose_sub = message_filters.Subscriber(self, NavSatFix, "mavros/global_position/global")
-        alt_sub = message_filters.Subscriber(self, Float64, "mavros/global_position/rel_alt")
-
-        self.drone_data_ts = message_filters.ApproximateTimeSynchronizer(
-            [global_pose_sub, alt_sub], queue_size=10, slop=0.1, allow_headerless=True
+        px4_qos = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
         )
-        self.drone_data_ts.registerCallback(self.drone_data_callback)
+
+        self._vehicle_global_position_sub = self.create_subscription(
+            VehicleGlobalPosition,
+            "fmu/out/vehicle_global_position",
+            self.__vehicle_global_position_cb,
+            px4_qos,
+        )
 
         self.figure_sub = self.create_subscription(
             FigureMsgList, "figure_finder/confirmed_figures", self.figure_callback, 10
         )
 
         self.get_logger().info("Waiting for initial GPS position and heading...")
-        start_global_pose = self.wait_for_message(NavSatFix, "mavros/global_position/global")
-        start_heading = self.wait_for_message(Float64, "mavros/global_position/compass_hdg")
+        vehicle_global_position_at_start = self.wait_for_message(
+            VehicleGlobalPosition,
+            "fmu/out/vehicle_global_position",
+            qos_profile=px4_qos,
+        )
+        vehicle_local_position_at_start = self.wait_for_message(
+            VehicleLocalPosition, "fmu/out/vehicle_local_position", qos_profile=px4_qos
+        )
 
         self.coordinate_scaler = CoordinateScaler(
-            start_global_pose.latitude,
-            start_global_pose.longitude,
-            start_heading.data
+            vehicle_global_position_at_start.lat,
+            vehicle_global_position_at_start.lon,
+            vehicle_local_position_at_start.heading,
         )
 
         self.get_logger().info("UploadNode initialized successfully.")
@@ -45,16 +60,20 @@ class UploadNode(Node):
         data = self.get_drone_request_data(global_pose, altitude)
         self.drone_uploader.add(data)
 
+    def __vehicle_global_position_cb(self, msg: VehicleGlobalPosition) -> None:
+        data = self.get_drone_request_data(msg)
+        self.drone_uploader.add(data)
+
     def figure_callback(self, data):
         for fig in data.figures:
             figure_data = self.get_figure_request_data(fig)
             self.figure_uploader.add(figure_data)
 
-    def get_drone_request_data(self, global_pose, rel_altitude):
+    def get_drone_request_data(self, global_position):
         return {
-            "x": global_pose.latitude,
-            "y": global_pose.longitude,
-            "z": rel_altitude.data
+            "x": global_position.lat,
+            "y": global_position.lon,
+            "z": global_position.alt,
         }
 
     def get_figure_request_data(self, figure: FigureMsg):
@@ -64,7 +83,7 @@ class UploadNode(Node):
             "y": y,
             "color": self.get_figure_color(figure),
             "sample_status": figure.status,
-            "sample_id": figure.id
+            "sample_id": figure.id,
         }
 
     def get_figure_color(self, figure):
@@ -72,11 +91,11 @@ class UploadNode(Node):
             "yellowBall": "y",
             "redBall": "r",
             "purpleBall": "p",
-            "blueBall": "b"
+            "blueBall": "b",
         }
         return color_map.get(figure.type, "unknown")
 
-    def wait_for_message(self, msg_type, topic, timeout_sec=10.0):
+    def wait_for_message(self, msg_type, topic, qos_profile=1, timeout_sec=10.0):
         """Waits for a single message from a given topic."""
         msg = None
 
@@ -86,7 +105,7 @@ class UploadNode(Node):
             msg = received_msg
 
         # Create a subscription for the topic and message type
-        subscription = self.create_subscription(msg_type, topic, callback, 1)
+        subscription = self.create_subscription(msg_type, topic, callback, qos_profile)
 
         # Spin until the message is received or timeout occurs
         start_time = self.get_clock().now()

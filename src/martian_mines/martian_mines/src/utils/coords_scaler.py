@@ -21,7 +21,7 @@ class CoordinateScaler:
         """
         self.base_latitude = lat
         self.base_longitude = lon
-        self.base_heading = math.radians(heading)
+        self.base_heading = heading
 
     def scale(self, x: float, y: float) -> Tuple[float, float]:
         """Scales the xy local coordinates to global values based on the offboard position and heading."""
