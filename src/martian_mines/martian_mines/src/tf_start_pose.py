@@ -7,7 +7,7 @@ from tf2_ros import StaticTransformBroadcaster
 
 from geometry_msgs.msg import TransformStamped
 
-from px4_msgs.msg import VehicleOdometry
+from martian_mines_msgs.msg import ENULocalOdometry
 
 
 class TfStartPose(Node):
@@ -28,7 +28,7 @@ class TfStartPose(Node):
         self.odometry = None
         self.odometrt_initialized = False
         self.subscription = self.create_subscription(
-            VehicleOdometry, "fmu/out/vehicle_odometry", self.odometry_cb, px4_qos
+            ENULocalOdometry, "enu_local_odometry", self.odometry_cb, px4_qos
         )
         self.broadcaster = StaticTransformBroadcaster(self)
 
@@ -47,14 +47,14 @@ class TfStartPose(Node):
         t.header.frame_id = "map"
         t.header.stamp = self.get_clock().now().to_msg()
         t.child_frame_id = "start_pose"
-        t.transform.translation.x = float(self.odometry.position[0])
-        t.transform.translation.y = float(self.odometry.position[1])
-        t.transform.translation.z = float(self.odometry.position[2] + self.drone_z_offset)
+        t.transform.translation.x = float(self.odometry.x)
+        t.transform.translation.y = float(self.odometry.y)
+        t.transform.translation.z = float(self.odometry.z + self.drone_z_offset)
 
-        t.transform.rotation.x = float(self.odometry.q[1])
-        t.transform.rotation.y = float(self.odometry.q[2])
-        t.transform.rotation.z = float(self.odometry.q[3])
-        t.transform.rotation.w = float(self.odometry.q[0])
+        t.transform.rotation.x = float(self.odometry.qx)
+        t.transform.rotation.y = float(self.odometry.qy)
+        t.transform.rotation.z = float(self.odometry.qz)
+        t.transform.rotation.w = float(self.odometry.qw)
 
         self.get_logger().info(f"Sending transform: \n{t}")
         self.broadcaster.sendTransform(t)

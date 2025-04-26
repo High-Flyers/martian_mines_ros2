@@ -25,7 +25,7 @@ from martian_mines_msgs.msg import (
     BoundingBoxLabeledList,
     FigureMsgList,
     BoundingBoxLabeled,
-    ENULocalPosition,
+    ENULocalOdometry,
 )
 
 
@@ -114,9 +114,9 @@ class FigureFinder(Node):
             px4_qos,
         )
         self.create_subscription(
-            ENULocalPosition,
-            "enu_local_position",
-            self.__enu_local_position_cb,
+            ENULocalOdometry,
+            "enu_local_odometry",
+            self.__enu_local_odometry_cb,
             px4_qos,
         )
 
@@ -260,7 +260,7 @@ class FigureFinder(Node):
         self.last_telem["longitude"] = msg.lon
         self.last_telem["altitude_amsl"] = msg.alt
 
-    def __enu_local_position_cb(self, msg: ENULocalPosition) -> None:
+    def __enu_local_odometry_cb(self, msg: ENULocalOdometry) -> None:
         self.last_telem["heading"] = msg.heading
         self.last_telem["altitude"] = msg.z
 

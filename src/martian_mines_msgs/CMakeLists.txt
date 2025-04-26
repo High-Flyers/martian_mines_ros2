@@ -15,7 +15,7 @@ set(msg_files
   msg/BoundingBoxLabeledList.msg
   msg/FigureMsg.msg
   msg/FigureMsgList.msg
-  msg/ENULocalPosition.msg
+  msg/ENULocalOdometry.msg
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

@@ -6,4 +6,7 @@ float32 vx
 float32 vy
 float32 vz
 
-float32 heading
+float32 qx
+float32 qy
+float32 qz
+float32 qw

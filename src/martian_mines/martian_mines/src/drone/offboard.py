@@ -4,6 +4,8 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 
+from tf_transformations import quaternion_multiply, quaternion_from_euler
+
 from px4_msgs.msg import (
     TrajectorySetpoint,
     VehicleLocalPosition,
@@ -11,9 +13,10 @@ from px4_msgs.msg import (
     OffboardControlMode,
     VehicleCommand,
     VehicleLandDetected,
+    VehicleAttitude,
 )
 
-from martian_mines_msgs.msg import ENULocalPosition
+from martian_mines_msgs.msg import ENULocalOdometry
 
 
 def ned_to_enu(n, e, d):
@@ -30,6 +33,13 @@ def ned_to_enu_heading(heading):
 
 def enu_to_ned_heading(heading):
     return heading - (np.pi / 2)
+
+
+def frd_to_flu_quaternion(x, y, z, w):
+    q_enu = (float(x), float(-y), float(-z), float(w))
+    q_90 = quaternion_from_euler(0, 0, np.pi / 2)
+
+    return quaternion_multiply(q_90, q_enu)
 
 
 class Offboard:
@@ -55,7 +65,7 @@ class Offboard:
         )
 
         self._pub_enu_local_position = self.node.create_publisher(
-            ENULocalPosition, "enu_local_position", 10
+            ENULocalOdometry, "enu_local_odometry", 10
         )
 
         # Subscribers
@@ -63,6 +73,12 @@ class Offboard:
             VehicleLocalPosition,
             "fmu/out/vehicle_local_position",
             self.vehicle_local_position_cb,
+            px4_qos,
+        )
+        self._sub_vehicle_attitude = self.node.create_subscription(
+            VehicleAttitude,
+            "fmu/out/vehicle_attitude",
+            self.vehicle_attitude_cb,
             px4_qos,
         )
         self._sub_vehicle_status = self.node.create_subscription(
@@ -78,21 +94,35 @@ class Offboard:
             px4_qos,
         )
 
-        self._vehicle_local_position = VehicleLocalPosition()
-        self._vehicle_status = VehicleStatus()
-        self._vehicle_land_detected = VehicleLandDetected()
-        self._enu_local_position = ENULocalPosition()
+        self._vehicle_local_position = None
+        self._vehicle_attitude = None
+        self._vehicle_status = None
+        self._vehicle_land_detected = None
+        self._enu_local_position = None
 
         self.timer = self.node.create_timer(0.1, self.timer_callback)
 
     def vehicle_local_position_cb(self, msg: VehicleLocalPosition) -> None:
         self._vehicle_local_position = msg
-        enu = ENULocalPosition()
+
+        if self._vehicle_attitude:
+            return
+
+        enu = ENULocalOdometry()
         enu.x, enu.y, enu.z = ned_to_enu(msg.x, msg.y, msg.z)
         enu.vx, enu.vy, enu.vz = ned_to_enu(msg.vx, msg.vy, msg.vz)
-        enu.heading = ned_to_enu_heading(msg.heading)
+        enu.qx, enu.qy, enu.qz, enu.qw = frd_to_flu_quaternion(
+            self._vehicle_attitude[1],
+            self._vehicle_attitude[2],
+            self._vehicle_attitude[3],
+            self._vehicle_attitude[0],
+        )
+
         self._pub_enu_local_position.publish(enu)
         self._enu_local_position = enu
+
+    def vehicle_attitude_cb(self, msg: VehicleAttitude) -> None:
+        self._vehicle_attitude = msg
 
     def vehicle_status_cb(self, msg: VehicleStatus) -> None:
         self._vehicle_status = msg
