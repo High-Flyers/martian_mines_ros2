@@ -38,6 +38,7 @@ class TfStartPose(Node):
         t.transform.rotation.z = self.local_position.orientation.z
         t.transform.rotation.w = self.local_position.orientation.w
 
+        self.get_logger().info(f"Sending transform: \n{t}")
         self.broadcaster.sendTransform(t)
         
 

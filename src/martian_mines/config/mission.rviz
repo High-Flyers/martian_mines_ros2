@@ -54,7 +54,7 @@ Visualization Manager:
       Update Interval: 0
     - Class: rviz_default_plugins/Image
       Enabled: true
-      Image Topic: /uav0/detection/image
+      Image Topic: detection/image
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -86,18 +86,18 @@ Visualization Manager:
       Name: PointStamped
       Queue Size: 10
       Radius: 0.02
-      Topic: /uav0/figure_finder/debug_figure_pos
+      Topic: figure_finder/debug_figure_pos
     - Class: rviz_default_plugins/Path
       Alpha: 1
       Buffer Length: 1
       Color: 25; 255; 0
       Enabled: true
       Name: Path
-      Topic: /uav0/trajectory_generator/path
+      Topic: trajectory_generator/path
       Queue Size: 10
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Marker Topic: /environment_visualization/markers
+      Marker Topic: environment_visualization/markers
       Name: MarkerArray
       Queue Size: 100
   Global Options:
@@ -113,11 +113,11 @@ Visualization Manager:
     - Class: rviz_default_plugins/FocusCamera
     - Class: rviz_default_plugins/Measure
     - Class: rviz_default_plugins/SetInitialPose
-      Topic: /initialpose
+      Topic: initialpose
     - Class: rviz_default_plugins/SetGoal
-      Topic: /move_base_simple/goal
+      Topic: move_base_simple/goal
     - Class: rviz_default_plugins/PublishPoint
-      Topic: /clicked_point
+      Topic: clicked_point
   Views:
     Current:
       Class: rviz_default_plugins/Orbit

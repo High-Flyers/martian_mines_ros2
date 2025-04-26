@@ -2,6 +2,12 @@
     "name": "martian_mines_ros2",
     "image": "highflyers/martian_mines_ros2:latest",
     "remoteUser": "highflyers",
+    "mounts": [
+    "source=${env:SSH_AUTH_SOCK},target=/ssh-agent,type=bind"
+    ],
+    "remoteEnv": {
+        "SSH_AUTH_SOCK": "/ssh-agent"
+    },
     "runArgs": [
         "--network=host",
         "--ipc=host",
@@ -29,5 +35,6 @@
             ]
         }
     },
-    // "onCreateCommand": "./scripts/build.sh ../.. --symlink-install"
+    "onCreateCommand": "./scripts/build.sh ../.. --symlink-install",
+
 }

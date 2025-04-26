@@ -1,5 +1,6 @@
 import os
 
+import launch_ros.actions
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, SetEnvironmentVariable, GroupAction, IncludeLaunchDescription
 from launch.conditions import IfCondition, UnlessCondition
@@ -15,6 +16,7 @@ def generate_launch_description():
     real_world = LaunchConfiguration('real_world')
     config_file = LaunchConfiguration('config_file')
     no_start_pose = LaunchConfiguration('no_start_pose')
+
 
     return LaunchDescription([
         # PX4 Environment variable
@@ -90,7 +92,6 @@ def generate_launch_description():
                     package='martian_mines',
                     executable='figure_finder',
                     name='figure_finder',
-                    namespace='uav0',
                     output='screen',
                     parameters=[config_file]
                 ),
@@ -99,7 +100,6 @@ def generate_launch_description():
                     package='martian_mines',
                     executable='detection',
                     name='detection',
-                    namespace='uav0',
                     output='screen',
                     parameters=[config_file]
                 ),
@@ -109,7 +109,6 @@ def generate_launch_description():
                     package='martian_mines',
                     executable='tf_start_pose',
                     name='tf_start_pose',
-                    namespace='uav0',
                     output='screen',
                     parameters=[config_file]
                 ),
@@ -120,7 +119,6 @@ def generate_launch_description():
                     package='martian_mines',
                     executable='remap_helper.py',  # dummy placeholder if you want to do remapping
                     name='remap_camera_topics',
-                    namespace='uav0',
                     remappings=[
                         ('camera/image_raw', 'color/image_raw'),
                         ('camera/camera_info', 'color/camera_info')

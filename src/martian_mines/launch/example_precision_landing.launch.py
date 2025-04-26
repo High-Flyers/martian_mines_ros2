@@ -4,6 +4,7 @@ from launch.conditions import IfCondition
 from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+import launch_ros.actions
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
@@ -23,6 +24,7 @@ def generate_launch_description():
 
     # Define UAV0 nodes
     uav0_nodes = GroupAction([
+        launch_ros.actions.PushRosNamespace('uav0'),
         Node(
             package='martian_mines',
             executable='precision_landing',

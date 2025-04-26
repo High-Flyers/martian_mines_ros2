@@ -4,6 +4,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
+import launch_ros.actions
 
 
 def generate_launch_description():
@@ -11,6 +12,8 @@ def generate_launch_description():
         "config", 
         default_value=os.path.join(get_package_share_directory("martian_mines"), "config", "mission.rviz")
     )
+
+    namespace = launch_ros.actions.PushRosNamespace('uav0')
 
     rviz = Node(
         package="rviz2",
@@ -28,6 +31,7 @@ def generate_launch_description():
     )
 
     return launch.LaunchDescription([
+        namespace,
         config,
         rviz,
         environment_visualization
