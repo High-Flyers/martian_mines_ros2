@@ -12,8 +12,6 @@ RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
     cmake \
     ros-dev-tools \
     python3-pip \
-    ros-humble-mavros \
-    ros-humble-mavros-extras \
     ros-humble-geographic-msgs \
     ros-humble-vision-msgs \
     ros-humble-std-msgs \

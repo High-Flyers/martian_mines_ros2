@@ -13,17 +13,6 @@ def generate_launch_description():
         )
     )
     
-    # mavros_launch = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         get_package_share_directory('mavros') + '/launch/px4.launch.py'
-    #     ),
-    #     launch_arguments={'fcu_url': 'udp://:14550@localhost:14550'}.items()
-    # )
-    
-    set_param_mavros = launch_ros.actions.SetParameter(
-        name='mavros/local_position/tf/send', value=True
-    )
-    
     static_tf = launch_ros.actions.Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -39,8 +28,6 @@ def generate_launch_description():
 
     return LaunchDescription([
         martian_mines_launch,
-        #mavros_launch,
-        set_param_mavros,
         static_tf,
         rosbag_record
     ])

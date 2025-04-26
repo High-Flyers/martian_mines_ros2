@@ -10,8 +10,6 @@ RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
     mesa-utils \
     python3-pip \
     python3-tk \
-    ros-humble-mavros \
-    ros-humble-mavros-extras \
     ros-humble-gazebo-ros \
     ros-humble-gazebo-ros-pkgs \
     ros-humble-vision-opencv \  # Replace cv-bridge
