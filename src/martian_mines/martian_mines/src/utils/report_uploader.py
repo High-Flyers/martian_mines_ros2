@@ -7,7 +7,7 @@ from px4_msgs.msg import VehicleGlobalPosition, VehicleLocalPosition
 from martian_mines_msgs.msg import FigureMsgList, FigureMsg
 from .coords_scaler import CoordinateScaler
 from .uploader import Uploader
-
+from martian_mines.src.drone.offboard import ned_to_enu_heading
 
 class UploadNode(Node):
     def __init__(self):
@@ -47,7 +47,7 @@ class UploadNode(Node):
 
     def __vehicle_local_position_cb(self, msg: VehicleLocalPosition) -> None:
         self.coordinate_scaler = CoordinateScaler(
-            msg.ref_lat, msg.ref_lon, msg.heading
+            msg.ref_lat, msg.ref_lon, ned_to_enu_heading(msg.heading)
         )
         self.destroy_subscription(self._vehicle_local_position_sub)
 
@@ -58,7 +58,7 @@ class UploadNode(Node):
     def figure_callback(self, data):
         if not self.coordinate_scaler:
             return
-        
+
         for fig in data.figures:
             figure_data = self.get_figure_request_data(fig)
             self.figure_uploader.add(figure_data)

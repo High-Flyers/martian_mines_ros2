@@ -15,7 +15,7 @@ from message_filters import ApproximateTimeSynchronizer, Subscriber
 from sensor_msgs.msg import Image, CameraInfo
 from std_srvs.srv import Trigger
 
-from px4_msgs.msg import VehicleGlobalPosition, VehicleLocalPosition
+from px4_msgs.msg import VehicleGlobalPosition
 
 from martian_mines.src.figure.figure import Figure
 from .figure_managment.figure_collector import FigureCollector
@@ -25,6 +25,7 @@ from martian_mines_msgs.msg import (
     BoundingBoxLabeledList,
     FigureMsgList,
     BoundingBoxLabeled,
+    ENULocalPosition,
 )
 
 
@@ -113,9 +114,9 @@ class FigureFinder(Node):
             px4_qos,
         )
         self.create_subscription(
-            VehicleLocalPosition,
-            "fmu/out/vehicle_local_position",
-            self.__vehicle_local_position_cb,
+            ENULocalPosition,
+            "enu_local_position",
+            self.__enu_local_position_cb,
             px4_qos,
         )
 
@@ -259,9 +260,9 @@ class FigureFinder(Node):
         self.last_telem["longitude"] = msg.lon
         self.last_telem["altitude_amsl"] = msg.alt
 
-    def __vehicle_local_position_cb(self, msg: VehicleLocalPosition) -> None:
+    def __enu_local_position_cb(self, msg: ENULocalPosition) -> None:
         self.last_telem["heading"] = msg.heading
-        self.last_telem["altitude"] = -msg.z
+        self.last_telem["altitude"] = msg.z
 
     def camera_info_callback(self, msg):
         self.camera_info_msg = msg

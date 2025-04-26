@@ -13,6 +13,8 @@ from px4_msgs.msg import (
     VehicleLandDetected,
 )
 
+from martian_mines_msgs.msg import ENULocalPosition
+
 
 def ned_to_enu(n, e, d):
     return (float(e), float(n), float(-d))
@@ -20,6 +22,14 @@ def ned_to_enu(n, e, d):
 
 def enu_to_ned(e, n, u):
     return (float(n), float(e), float(-u))
+
+
+def ned_to_enu_heading(heading):
+    return heading + (np.pi / 2)
+
+
+def enu_to_ned_heading(heading):
+    return heading - (np.pi / 2)
 
 
 class Offboard:
@@ -44,6 +54,10 @@ class Offboard:
             VehicleCommand, "fmu/in/vehicle_command", px4_qos
         )
 
+        self._pub_enu_local_position = self.node.create_publisher(
+            ENULocalPosition, "enu_local_position", 10
+        )
+
         # Subscribers
         self._sub_vehicle_local_position = self.node.create_subscription(
             VehicleLocalPosition,
@@ -61,17 +75,24 @@ class Offboard:
             VehicleLandDetected,
             "fmu/out/vehicle_land_detected",
             self.vehicle_land_detected_cb,
-            px4_qos
+            px4_qos,
         )
 
         self._vehicle_local_position = VehicleLocalPosition()
         self._vehicle_status = VehicleStatus()
         self._vehicle_land_detected = VehicleLandDetected()
+        self._enu_local_position = ENULocalPosition()
 
         self.timer = self.node.create_timer(0.1, self.timer_callback)
 
     def vehicle_local_position_cb(self, msg: VehicleLocalPosition) -> None:
         self._vehicle_local_position = msg
+        enu = ENULocalPosition()
+        enu.x, enu.y, enu.z = ned_to_enu(msg.x, msg.y, msg.z)
+        enu.vx, enu.vy, enu.vz = ned_to_enu(msg.vx, msg.vy, msg.vz)
+        enu.heading = ned_to_enu_heading(msg.heading)
+        self._pub_enu_local_position.publish(enu)
+        self._enu_local_position = enu
 
     def vehicle_status_cb(self, msg: VehicleStatus) -> None:
         self._vehicle_status = msg
@@ -128,15 +149,18 @@ class Offboard:
     def is_landed(self):
         return self._vehicle_land_detected.landed
 
-    def fly_point(self, x, y, z):
+    def fly_point(self, x, y, z, heading=None):
         msg = TrajectorySetpoint()
         msg.position = enu_to_ned(x, y, z)
+        msg.yaw = enu_to_ned(heading if heading else self._enu_local_position.heading)
         msg.timestamp = rclpy.time.Time().to_msg()
         self._pub_trajectory_setpoint.publish(msg)
 
-    def fly_velocity(self, vx, vy, vz, yaw=0.0):
+    def fly_velocity(self, vx, vy, vz, heading=None):
         msg = TrajectorySetpoint()
+        msg.position = [float("NaN"), float("NaN"), float("NaN")]
         msg.velocity = enu_to_ned(vx, vy, vz)
+        msg.yaw = enu_to_ned(heading if heading else self._enu_local_position.heading)
         msg.timestamp = rclpy.time.Time().to_msg()
         self._pub_trajectory_setpoint.publish(msg)
 
