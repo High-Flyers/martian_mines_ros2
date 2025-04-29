@@ -1,6 +1,5 @@
 import os
 
-import launch_ros.actions
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, SetEnvironmentVariable, GroupAction, IncludeLaunchDescription
 from launch.conditions import IfCondition, UnlessCondition
@@ -11,7 +10,6 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     martian_mines_share = get_package_share_directory('martian_mines')
-    mavros_share = get_package_share_directory('mavros')
 
     real_world = LaunchConfiguration('real_world')
     config_file = LaunchConfiguration('config_file')
@@ -45,15 +43,6 @@ def generate_launch_description():
                     PythonLaunchDescriptionSource(
                         os.path.join(martian_mines_share, 'launch', 'realsense.launch.py')
                     )
-                ),
-                # Include mavros launch (under uav0 namespace)
-                IncludeLaunchDescription(
-                    PythonLaunchDescriptionSource(
-                        os.path.join(mavros_share, 'launch', 'px4.launch.py')
-                    ),
-                    launch_arguments={
-                        'fcu_url': 'udp://:14550@localhost:14550'
-                    }.items()
                 ),
                 # Static transform for camera
                 Node(

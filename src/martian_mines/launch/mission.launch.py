@@ -3,15 +3,10 @@ import launch_ros.actions
 from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction
-from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 
 def generate_launch_description():
-    real_world = LaunchConfiguration("real_world")
-    no_start_pose = LaunchConfiguration("no_start_pose")
-
-    namespace = launch_ros.actions.PushRosNamespace("uav0")
     core_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
@@ -24,7 +19,7 @@ def generate_launch_description():
         }.items()
     )
 
-    uav0_group = GroupAction([
+    uav_group = GroupAction([
         launch.actions.DeclareLaunchArgument("real_world", default_value="false"),
         launch.actions.DeclareLaunchArgument("no_start_pose", default_value="false"),
 
@@ -57,10 +52,9 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        namespace,
         DeclareLaunchArgument("real_world", default_value="false"),
         DeclareLaunchArgument("no_start_pose", default_value="false"),
         core_launch,
-        uav0_group,
+        uav_group,
         figures_vis_launch
     ])

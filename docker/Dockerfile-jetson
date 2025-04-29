@@ -28,16 +28,11 @@ RUN apt install -y \
     ros-humble-image-geometry \
     ros-humble-vision-msgs \
     ros-humble-tf2-geometry-msgs \
-    ros-humble-mavros \
-    ros-humble-mavros-extras \
     python3-colcon-common-extensions
 
 # Adding udev rules for Intel RealSense
 RUN curl -sSL https://raw.githubusercontent.com/IntelRealSense/librealsense/master/config/99-realsense-libusb.rules \
     -o /etc/udev/rules.d/99-realsense-libusb.rules
-
-# additional dependencies for MAVROS
-RUN /opt/ros/humble/lib/mavros/install_geographiclib_datasets.sh
 
 # workspace configuration
 RUN mkdir -p /home/user/ws/src
