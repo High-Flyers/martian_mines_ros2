@@ -24,7 +24,7 @@ RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install ultralytics dill pyrr shapely transitions matplotlib opencv-contrib-python cv_bridge
-RUN pip3 install -U numpy
+RUN pip3 install -U numpy kconfiglib
 
 # Create a non-root user with sudo privileges
 RUN groupadd --gid ${USER_GID} ${USERNAME} \
@@ -38,8 +38,14 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Clone repositories to workspace
 ENV ROS_WORKSPACE=/home/${USERNAME}/ws
 WORKDIR ${ROS_WORKSPACE}/src
+
 RUN git clone "https://github.com/eProsima/Micro-XRCE-DDS-Agent.git" --branch v2.4.2 && \
-    git clone "https://github.com/PX4/px4_msgs.git" --branch "release/1.15"
+    git clone "https://github.com/PX4/px4_msgs.git" --branch release/1.15 && \
+    git clone "https://github.com/PX4/px4_ros_com.git" --recursive
+
+# PX4-Autopilot goes OUTSIDE the ROS workspace
+WORKDIR /home/${USERNAME}
+RUN git clone "https://github.com/PX4/PX4-Autopilot.git" --recursive --branch v1.14.0
 
 # Install ROS dependencies
 WORKDIR $ROS_WORKSPACE
