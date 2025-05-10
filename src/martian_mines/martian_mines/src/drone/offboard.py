@@ -4,7 +4,8 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 
-from tf_transformations import quaternion_multiply, quaternion_from_euler
+# from tf_transformations import quaternion_multiply, quaternion_from_euler
+from scipy.spatial.transform import Rotation as R
 
 from px4_msgs.msg import (
     TrajectorySetpoint,
@@ -37,9 +38,13 @@ def enu_to_ned_heading(heading):
 
 def frd_to_flu_quaternion(x, y, z, w):
     q_enu = (float(x), float(-y), float(-z), float(w))
-    q_90 = quaternion_from_euler(0, 0, np.pi / 2)
+    q_90 = R.from_euler('xyz',[0, 0, np.pi / 2]).as_quat()
 
-    return quaternion_multiply(q_90, q_enu)
+    rot_90 = R.from_quat(q_90)
+    rot_enu = R.from_quat(q_enu)
+
+    return (rot_90 * rot_enu).as_quat()
+
 
 
 class Offboard:
@@ -49,6 +54,14 @@ class Offboard:
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
             history=HistoryPolicy.KEEP_LAST,
             depth=1,
+            self._landing_target_pose = None #most recent lending_target_pose
+
+            self._sub_landing_target_pose = self.node.create_subscription( #subscribe lending_target_pose
+                PoseStamped,
+                "landing_target/pose",
+                self.landing_target_pose_cb,
+                10
+            )
         )
 
         self.node = node
@@ -148,8 +161,43 @@ class Offboard:
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=0.0
         )
 
-    def land(self):
-        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
+    # def land(self):
+    #     if not self._vehicle_local_position:
+    #         self.node.get_logger().warn("Lack of local data – landing prohibited")
+    #         return
+
+    #     x, y, z = self._vehicle_local_position.x, self._vehicle_local_position.y, self._vehicle_local_position.z
+
+    #     self.publish_vehicle_command(
+    #         VehicleCommand.VEHICLE_CMD_NAV_LAND,
+    #         param5=x,  # latitude or local x
+    #         param6=y,  # longitude or y
+    #         param7=z   # altitude
+    #     )
+    #adding updating mechanism
+    def landing_target_pose_cb(self, msg: PoseStamped):
+
+        self._landing_target_pose = msg
+        self.node.get_logger().info(f"Update landing target pose: x={msg.pose.position.x:.2f}, y={msg.pose.position.y:.2f}, z={msg.pose.position.z:.2f}")
+
+    #landing based on landing target pose
+    def land_on_target(self):
+
+        if not self._landing_target_pose:
+        self.node.get_logger().warn("Lack of landing target data!")
+        return
+
+        pose = self._landing_target_pose.pose
+        x, y, z = enu_to_ned(pose.position.x, pose.position.y, pose.position.z)
+
+     self.publish_vehicle_command(
+            VehicleCommand.VEHICLE_CMD_NAV_LAND,
+            param5=x,  # lokalne X (NED)
+            param6=y,  # lokalne Y
+            param7=z   # lokalne Z
+        )
+
+        self.node.get_logger().info("Landing command sent based on target position")
 
     def return_home(self):
         self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_RETURN_TO_LAUNCH)
@@ -227,3 +275,7 @@ class Offboard:
         msg.from_external = True
         msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
         self._pub_vehicle_command.publish(msg)
+
+        self.node.get_logger().info(
+        f"Sent VehicleCommand: {command}, params: {[msg.param1, msg.param2, msg.param3, msg.param4, msg.param5, msg.param6, msg.param7]}"
+    )
