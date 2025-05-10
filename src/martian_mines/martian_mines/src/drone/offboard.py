@@ -1,10 +1,8 @@
 import numpy as np
-
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
-
-# from tf_transformations import quaternion_multiply, quaternion_from_euler
+from geometry_msgs.msg import PoseStamped
 from scipy.spatial.transform import Rotation as R
 
 from px4_msgs.msg import (
@@ -54,19 +52,19 @@ class Offboard:
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
             history=HistoryPolicy.KEEP_LAST,
             depth=1,
-            self._landing_target_pose = None #most recent lending_target_pose
-
-            self._sub_landing_target_pose = self.node.create_subscription( #subscribe lending_target_pose
-                PoseStamped,
-                "landing_target/pose",
-                self.landing_target_pose_cb,
-                10
-            )
         )
 
         self.node = node
 
-        # Publishers
+        self._landing_target_pose = None #most recent lending_target_pose
+
+        self._sub_landing_target_pose = self.node.create_subscription( #subscribe lending_target_pose
+            PoseStamped,
+            "landing_target/pose",
+            self.landing_target_pose_cb,
+            10
+        )
+
         self._pub_trajectory_setpoint = self.node.create_publisher(
             TrajectorySetpoint, "fmu/in/trajectory_setpoint", px4_qos
         )
@@ -81,7 +79,7 @@ class Offboard:
             ENULocalOdometry, "enu_local_odometry", 10
         )
 
-        # Subscribers
+
         self._sub_vehicle_local_position = self.node.create_subscription(
             VehicleLocalPosition,
             "fmu/out/vehicle_local_position",
@@ -161,41 +159,30 @@ class Offboard:
             VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=0.0
         )
 
-    # def land(self):
-    #     if not self._vehicle_local_position:
-    #         self.node.get_logger().warn("Lack of local data – landing prohibited")
-    #         return
-
-    #     x, y, z = self._vehicle_local_position.x, self._vehicle_local_position.y, self._vehicle_local_position.z
-
-    #     self.publish_vehicle_command(
-    #         VehicleCommand.VEHICLE_CMD_NAV_LAND,
-    #         param5=x,  # latitude or local x
-    #         param6=y,  # longitude or y
-    #         param7=z   # altitude
-    #     )
-    #adding updating mechanism
+    def land(self):
+            self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
+    
     def landing_target_pose_cb(self, msg: PoseStamped):
 
         self._landing_target_pose = msg
         self.node.get_logger().info(f"Update landing target pose: x={msg.pose.position.x:.2f}, y={msg.pose.position.y:.2f}, z={msg.pose.position.z:.2f}")
 
-    #landing based on landing target pose
     def land_on_target(self):
 
         if not self._landing_target_pose:
-        self.node.get_logger().warn("Lack of landing target data!")
-        return
+            self.node.get_logger().warn("Lack of landing target data!")
+            return
 
         pose = self._landing_target_pose.pose
         x, y, z = enu_to_ned(pose.position.x, pose.position.y, pose.position.z)
 
-     self.publish_vehicle_command(
-            VehicleCommand.VEHICLE_CMD_NAV_LAND,
-            param5=x,  # lokalne X (NED)
-            param6=y,  # lokalne Y
-            param7=z   # lokalne Z
-        )
+
+        self.publish_vehicle_command(
+                VehicleCommand.VEHICLE_CMD_NAV_LAND,
+                param5=x,  # lokalne X (NED)
+                param6=y,  # lokalne Y
+                param7=z   # lokalne Z
+            )
 
         self.node.get_logger().info("Landing command sent based on target position")
 
@@ -279,3 +266,11 @@ class Offboard:
         self.node.get_logger().info(
         f"Sent VehicleCommand: {command}, params: {[msg.param1, msg.param2, msg.param3, msg.param4, msg.param5, msg.param6, msg.param7]}"
     )
+ 
+    @property
+    def rel_alt(self):
+        if not self._vehicle_local_position:
+            self.node.get_logger().warn("Lack of local pose - rel_alt unknown")
+            return 0.0
+        return -self._vehicle_local_position.z  # Z in NED: negative above ground
+

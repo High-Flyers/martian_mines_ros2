@@ -26,6 +26,7 @@ RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
 RUN pip3 install ultralytics dill pyrr shapely transitions matplotlib opencv-contrib-python cv_bridge
 RUN pip3 install -U numpy scipy
 
+
 # Create a non-root user with sudo privileges
 RUN groupadd --gid ${USER_GID} ${USERNAME} \
     && useradd -s /bin/bash --uid ${USER_UID} --gid ${USER_GID} -m ${USERNAME} \
