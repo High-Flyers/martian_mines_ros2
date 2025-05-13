@@ -35,10 +35,11 @@ def enu_to_ned_heading(heading):
 
 
 def frd_to_flu_quaternion(x, y, z, w):
-    q_enu = np.quaternion(float(x), float(-y), float(-z), float(w))
+    q_enu = np.quaternion(float(w), float(x), float(-y), float(-z))
     q_90 = from_euler_angles((0, 0, np.pi / 2))
 
-    return q_90 * q_enu
+    result = q_90 * q_enu
+    return (result.x, result.y, result.z, result.w)
 
 
 class Offboard:
@@ -64,7 +65,7 @@ class Offboard:
         )
 
         self._pub_enu_local_position = self.node.create_publisher(
-            ENULocalOdometry, "enu_local_odometry", 10
+            ENULocalOdometry, "enu_local_odometry", px4_qos
         )
 
         # Subscribers
@@ -104,17 +105,17 @@ class Offboard:
     def vehicle_local_position_cb(self, msg: VehicleLocalPosition) -> None:
         self._vehicle_local_position = msg
 
-        if self._vehicle_attitude:
+        if self._vehicle_attitude is None:
             return
 
         enu = ENULocalOdometry()
         enu.x, enu.y, enu.z = ned_to_enu(msg.x, msg.y, msg.z)
         enu.vx, enu.vy, enu.vz = ned_to_enu(msg.vx, msg.vy, msg.vz)
         enu.qx, enu.qy, enu.qz, enu.qw = frd_to_flu_quaternion(
-            self._vehicle_attitude[1],
-            self._vehicle_attitude[2],
-            self._vehicle_attitude[3],
-            self._vehicle_attitude[0],
+            self._vehicle_attitude.q[1],
+            self._vehicle_attitude.q[2],
+            self._vehicle_attitude.q[3],
+            self._vehicle_attitude.q[0],
         )
 
         self._pub_enu_local_position.publish(enu)
@@ -134,8 +135,10 @@ class Offboard:
         self.arm()
 
     def takeoff(self, height):
-        curr_position = self.local_pos.pose.position
-        self.fly_point(curr_position.x, curr_position.y, height)
+        if self._enu_local_position is None:
+            return
+
+        self.fly_point(self._enu_local_position.x, self._enu_local_position.y, height)
 
     def arm(self):
         self.publish_vehicle_command(
@@ -160,25 +163,36 @@ class Offboard:
         self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 6.0)
 
     def is_takeoff_finished(self, height, epsilon=0.1):
-        curr_position = self._vehicle_local_position
+        if self._enu_local_position is None:
+            return False
+        
         return self.is_point_reached(
-            curr_position.x, curr_position.y, height, epsilon=epsilon
+            self._enu_local_position.x, self._enu_local_position.y, height, epsilon=epsilon
         )
 
-    def is_point_reached(self, x, y, z, frame_id="map", epsilon=0.1):
+    def is_point_reached(self, x, y, z, epsilon=0.1):
+        if self._enu_local_position is None:
+            return False
+        
         distance = np.linalg.norm(
             [
-                x - self._vehicle_local_position.x,
-                y - self._vehicle_local_position.y,
-                z - self._vehicle_local_position.z,
+                x - self._enu_local_position.x,
+                y - self._enu_local_position.y,
+                z - self._enu_local_position.z,
             ]
         )
         return distance < epsilon
 
     def is_landed(self):
+        if self._vehicle_land_detected is None:
+            return False
+        
         return self._vehicle_land_detected.landed
 
     def fly_point(self, x, y, z, heading=None):
+        if self._enu_local_position is None:
+            return
+
         msg = TrajectorySetpoint()
         msg.position = enu_to_ned(x, y, z)
         msg.yaw = enu_to_ned(heading if heading else self._enu_local_position.heading)
@@ -186,6 +200,9 @@ class Offboard:
         self._pub_trajectory_setpoint.publish(msg)
 
     def fly_velocity(self, vx, vy, vz, heading=None):
+        if self._enu_local_position is None:
+            return
+        
         msg = TrajectorySetpoint()
         msg.position = [float("NaN"), float("NaN"), float("NaN")]
         msg.velocity = enu_to_ned(vx, vy, vz)
