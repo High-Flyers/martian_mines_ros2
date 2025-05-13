@@ -33,23 +33,23 @@ class FigureFinder(Node):
     def __init__(self):
         super().__init__("figure_finder")
 
-        package_path = get_package_share_directory("martian_mines")  # Zamiana rospkg
+        package_path = get_package_share_directory("martian_mines")
         color_detection_config = os.path.join(
             package_path,
             self.declare_parameter(
                 "color_detection_config_file",
-                "config/color_detection.json",  # default path
+                "config/color_detection.json",
             ).value,
         )
         self.color_detection = ColorDetection(
             color_detection_config
-        )  # color detection reads parmas itself
+        )
 
         figure_operations_path = os.path.join(
             package_path,
             self.declare_parameter(
                 "figure_operations_config_file",
-                "config/figure_operations.yaml",  # default path
+                "config/figure_operations.yaml",
             ).value,
         )
         self.figure_operations_config = yaml.safe_load(
@@ -58,18 +58,18 @@ class FigureFinder(Node):
 
         json_figure_collector_params_path = os.path.join(
             package_path,
-            self.declare_parameter(  # varaible with json config for figure_coollector
+            self.declare_parameter(
                 "figure_collector",
-                "config/real.yaml",  # default path
+                "config/real.yaml",
             ).value,
         )
 
         figure_collector_params = yaml.safe_load(
             open(json_figure_collector_params_path)
-        )["figure_finder"]["ros__parameters"]["figure_collector"]  # params for f_g
+        )["figure_finder"]["ros__parameters"]["figure_collector"]
 
         self.figure_collector = (
-            FigureCollector(  # figure collector needs params as argument
+            FigureCollector(
                 figure_collector_params
             )
         )
@@ -79,7 +79,7 @@ class FigureFinder(Node):
         self.bridge = CvBridge()
 
         self.subscription = self.create_subscription(
-            CameraInfo, "camera/camera_info", self.camera_info_callback, 15
+            CameraInfo, "/camera_info", self.camera_info_callback, 15
         )
         self.camera_info_received = False
         self.wait_for_camera_info()
@@ -205,7 +205,6 @@ class FigureFinder(Node):
                     color=color,
                     determined_type=determined_type,
                 )
-                # print(f"Figure: {figure}")
                 figures.append(figure)
             except Exception as e:
                 self.get_logger().warn(f"Figure creation exception: {e}")
@@ -261,7 +260,6 @@ class FigureFinder(Node):
         self.last_telem["altitude_amsl"] = msg.alt
 
     def __enu_local_odometry_cb(self, msg: ENULocalOdometry) -> None:
-        self.last_telem["heading"] = msg.heading
         self.last_telem["altitude"] = msg.z
 
     def camera_info_callback(self, msg):
