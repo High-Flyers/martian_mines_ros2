@@ -24,7 +24,6 @@ def generate_launch_description():
     )
 
     uav0_group = GroupAction([
-        launch_ros.actions.PushRosNamespace('uav0'),
         Node(
             package="martian_mines",
             executable="detection",

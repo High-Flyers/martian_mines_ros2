@@ -37,7 +37,7 @@ class TfStartPose(Node):
         if not self.odometrt_initialized:
             self.odometrt_initialized = True
             self.get_logger().info(
-                f"Odometry received, pose: \n{self.odometry}"
+                f"Odometry received"
             )
         self.send_transform()
         self.destroy_subscription(self.subscription)
@@ -56,7 +56,6 @@ class TfStartPose(Node):
         t.transform.rotation.z = float(self.odometry.qz)
         t.transform.rotation.w = float(self.odometry.qw)
 
-        self.get_logger().info(f"Sending transform: \n{t}")
         self.broadcaster.sendTransform(t)
 
 
