@@ -160,8 +160,8 @@ class Offboard:
         )
 
     def land(self):
-            self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
-    
+        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
+
     def landing_target_pose_cb(self, msg: PoseStamped):
 
         self._landing_target_pose = msg
@@ -178,11 +178,11 @@ class Offboard:
 
 
         self.publish_vehicle_command(
-                VehicleCommand.VEHICLE_CMD_NAV_LAND,
-                param5=x,  # lokalne X (NED)
-                param6=y,  # lokalne Y
-                param7=z   # lokalne Z
-            )
+            VehicleCommand.VEHICLE_CMD_NAV_LAND,
+            param5=x,  # lokalne X (NED)
+            param6=y,  # lokalne Y
+            param7=z   # lokalne Z
+        )
 
         self.node.get_logger().info("Landing command sent based on target position")
 

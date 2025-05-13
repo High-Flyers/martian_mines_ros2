@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.duration import Duration
 from geometry_msgs.msg import PointStamped, Pose, Point
-from mavros_msgs.msg import LandingTarget
+
 from sensor_msgs.msg import CameraInfo
 from vision_msgs.msg import BoundingBox2D
 from std_msgs.msg import Empty
