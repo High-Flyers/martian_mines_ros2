@@ -260,6 +260,7 @@ class FigureFinder(Node):
         self.last_telem["altitude_amsl"] = msg.alt
 
     def __enu_local_odometry_cb(self, msg: ENULocalOdometry) -> None:
+        self.last_telem["heading"] = msg.heading
         self.last_telem["altitude"] = msg.z
 
     def camera_info_callback(self, msg):
