@@ -90,6 +90,13 @@ class MissionController(Node, Machine):
             self.offboard.takeoff(self.takeoff_height)
             if self.offboard.is_takeoff_finished(self.takeoff_height):
                 self.offboard.set_hold_mode()
+                self.get_logger().info("Takeoff complete. Exiting.")
+        #         rclpy.shutdown()  # <- Stop ROS here
+        #         self.timer_takeoff.cancel()
+
+        # self.timer_takeoff = self.create_timer(0.02, cb_timer_takeoff)
+        # self.create_timer(0.2, self.offboard.start)
+
                 self.takeoff_finished()
                 self.timer_takeoff.cancel()
 
