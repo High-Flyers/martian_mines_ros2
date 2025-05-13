@@ -1,10 +1,9 @@
 import numpy as np
+from quaternion import from_euler_angles
 
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
-
-from tf_transformations import quaternion_multiply, quaternion_from_euler
 
 from px4_msgs.msg import (
     TrajectorySetpoint,
@@ -36,10 +35,10 @@ def enu_to_ned_heading(heading):
 
 
 def frd_to_flu_quaternion(x, y, z, w):
-    q_enu = (float(x), float(-y), float(-z), float(w))
-    q_90 = quaternion_from_euler(0, 0, np.pi / 2)
+    q_enu = np.quaternion(float(x), float(-y), float(-z), float(w))
+    q_90 = from_euler_angles((0, 0, np.pi / 2))
 
-    return quaternion_multiply(q_90, q_enu)
+    return q_90 * q_enu
 
 
 class Offboard:
@@ -195,6 +194,9 @@ class Offboard:
         self._pub_trajectory_setpoint.publish(msg)
 
     def timer_callback(self):
+        if self._vehicle_status is None:
+            return
+
         if self._vehicle_status.nav_state != VehicleStatus.NAVIGATION_STATE_OFFBOARD:
             return
 
