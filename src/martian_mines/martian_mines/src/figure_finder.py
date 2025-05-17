@@ -142,14 +142,14 @@ class FigureFinder(Node):
 
     def create_figures(self, frame, bboxes: List[BoundingBoxLabeled], config):
         def shrink_bbox(bbox_labeled: BoundingBoxLabeled, offset_percent: float = 0.0):
-            bbox_labeled.bbox.size_x = int(offset_percent * (bbox_labeled.bbox.size_x))
-            bbox_labeled.bbox.size_y = int(offset_percent * (bbox_labeled.bbox.size_y))
+            bbox_labeled.bbox.size_x = offset_percent * bbox_labeled.bbox.size_x
+            bbox_labeled.bbox.size_y = offset_percent * bbox_labeled.bbox.size_y
 
         def get_img_piece(frame, bbox_labeled: BoundingBoxLabeled):
-            x1 = int(bbox_labeled.bbox.center.x - bbox_labeled.bbox.size_x / 2)
-            x2 = int(bbox_labeled.bbox.center.x + bbox_labeled.bbox.size_x / 2)
-            y1 = int(bbox_labeled.bbox.center.y - bbox_labeled.bbox.size_y / 2)
-            y2 = int(bbox_labeled.bbox.center.y + bbox_labeled.bbox.size_y / 2)
+            x1 = bbox_labeled.bbox.center.position.x - bbox_labeled.bbox.size_x / 2
+            x2 = bbox_labeled.bbox.center.position.x + bbox_labeled.bbox.size_x / 2
+            y1 = bbox_labeled.bbox.center.position.y - bbox_labeled.bbox.size_y / 2
+            y2 = bbox_labeled.bbox.center.position.y + bbox_labeled.bbox.size_y / 2
             return frame[y1:y2, x1:x2]
 
         figures = []
