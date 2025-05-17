@@ -56,9 +56,9 @@ class Offboard:
 
         self.node = node
 
-        self._landing_target_pose = None #most recent lending_target_pose
+        self._landing_target_pose = None 
 
-        self._sub_landing_target_pose = self.node.create_subscription( #subscribe lending_target_pose
+        self._sub_landing_target_pose = self.node.create_subscription( 
             PoseStamped,
             "landing_target/pose",
             self.landing_target_pose_cb,
@@ -163,9 +163,7 @@ class Offboard:
         self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
 
     def landing_target_pose_cb(self, msg: PoseStamped):
-
         self._landing_target_pose = msg
-        self.node.get_logger().info(f"Update landing target pose: x={msg.pose.position.x:.2f}, y={msg.pose.position.y:.2f}, z={msg.pose.position.z:.2f}")
 
     def land_on_target(self):
 
