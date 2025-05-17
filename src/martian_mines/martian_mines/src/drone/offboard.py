@@ -1,10 +1,9 @@
 import numpy as np
+from quaternion import from_euler_angles, as_euler_angles
 
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
-
-from tf_transformations import quaternion_multiply, quaternion_from_euler
 
 from px4_msgs.msg import (
     TrajectorySetpoint,
@@ -36,11 +35,17 @@ def enu_to_ned_heading(heading):
 
 
 def frd_to_flu_quaternion(x, y, z, w):
-    q_enu = (float(x), float(-y), float(-z), float(w))
-    q_90 = quaternion_from_euler(0, 0, np.pi / 2)
+    q_enu = np.quaternion(float(w), float(x), float(-y), float(-z))
+    q_90 = from_euler_angles((0, 0, np.pi / 2))
 
-    return quaternion_multiply(q_90, q_enu)
+    result = q_90 * q_enu
+    return (result.x, result.y, result.z, result.w)
 
+def heading_from_quaternion(x, y, z, w):
+    q = np.quaternion(float(w), float(x), float(y), float(z))
+    angles = as_euler_angles(q)
+
+    return angles[0]
 
 class Offboard:
     def __init__(self, node: Node) -> None:
@@ -65,7 +70,7 @@ class Offboard:
         )
 
         self._pub_enu_local_position = self.node.create_publisher(
-            ENULocalOdometry, "enu_local_odometry", 10
+            ENULocalOdometry, "enu_local_odometry", px4_qos
         )
 
         # Subscribers
@@ -102,21 +107,26 @@ class Offboard:
 
         self.timer = self.node.create_timer(0.1, self.timer_callback)
 
+    @property
+    def enu_local_odom(self) -> ENULocalOdometry:
+        return self._enu_local_position
+
     def vehicle_local_position_cb(self, msg: VehicleLocalPosition) -> None:
         self._vehicle_local_position = msg
 
-        if self._vehicle_attitude:
+        if self._vehicle_attitude is None:
             return
 
         enu = ENULocalOdometry()
         enu.x, enu.y, enu.z = ned_to_enu(msg.x, msg.y, msg.z)
         enu.vx, enu.vy, enu.vz = ned_to_enu(msg.vx, msg.vy, msg.vz)
         enu.qx, enu.qy, enu.qz, enu.qw = frd_to_flu_quaternion(
-            self._vehicle_attitude[1],
-            self._vehicle_attitude[2],
-            self._vehicle_attitude[3],
-            self._vehicle_attitude[0],
+            self._vehicle_attitude.q[1],
+            self._vehicle_attitude.q[2],
+            self._vehicle_attitude.q[3],
+            self._vehicle_attitude.q[0],
         )
+        enu.heading = heading_from_quaternion(enu.qx, enu.qy, enu.qz, enu.qw)
 
         self._pub_enu_local_position.publish(enu)
         self._enu_local_position = enu
@@ -135,8 +145,10 @@ class Offboard:
         self.arm()
 
     def takeoff(self, height):
-        curr_position = self.local_pos.pose.position
-        self.fly_point(curr_position.x, curr_position.y, height)
+        if self._enu_local_position is None:
+            return
+
+        self.fly_point(self._enu_local_position.x, self._enu_local_position.y, height)
 
     def arm(self):
         self.publish_vehicle_command(
@@ -155,46 +167,63 @@ class Offboard:
         self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_RETURN_TO_LAUNCH)
 
     def set_hold_mode(self):
-        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 2.0)
+        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=2.0)
 
     def set_offboard_mode(self):
-        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 6.0)
+        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=6.0)
 
     def is_takeoff_finished(self, height, epsilon=0.1):
-        curr_position = self._vehicle_local_position
+        if self._enu_local_position is None:
+            return False
+        
         return self.is_point_reached(
-            curr_position.x, curr_position.y, height, epsilon=epsilon
+            self._enu_local_position.x, self._enu_local_position.y, height, epsilon=epsilon
         )
 
-    def is_point_reached(self, x, y, z, frame_id="map", epsilon=0.1):
+    def is_point_reached(self, x, y, z, epsilon=0.1):
+        if self._enu_local_position is None:
+            return False
+        
         distance = np.linalg.norm(
             [
-                x - self._vehicle_local_position.x,
-                y - self._vehicle_local_position.y,
-                z - self._vehicle_local_position.z,
+                x - self._enu_local_position.x,
+                y - self._enu_local_position.y,
+                z - self._enu_local_position.z,
             ]
         )
         return distance < epsilon
 
     def is_landed(self):
+        if self._vehicle_land_detected is None:
+            return False
+        
         return self._vehicle_land_detected.landed
 
     def fly_point(self, x, y, z, heading=None):
+        if self._enu_local_position is None:
+            return
+
         msg = TrajectorySetpoint()
         msg.position = enu_to_ned(x, y, z)
-        msg.yaw = enu_to_ned(heading if heading else self._enu_local_position.heading)
-        msg.timestamp = rclpy.time.Time().to_msg()
+        msg.yaw = enu_to_ned_heading(heading if heading else self._enu_local_position.heading)
+        msg.timestamp =int(self.node.get_clock().now().nanoseconds / 1000)
         self._pub_trajectory_setpoint.publish(msg)
 
     def fly_velocity(self, vx, vy, vz, heading=None):
+        if self._enu_local_position is None:
+            return
+        
         msg = TrajectorySetpoint()
         msg.position = [float("NaN"), float("NaN"), float("NaN")]
         msg.velocity = enu_to_ned(vx, vy, vz)
-        msg.yaw = enu_to_ned(heading if heading else self._enu_local_position.heading)
-        msg.timestamp = rclpy.time.Time().to_msg()
+        msg.yaw = enu_to_ned_heading(heading if heading else self._enu_local_position.heading)
+        msg.timestamp = int(self.node.get_clock().now().nanoseconds / 1000)
         self._pub_trajectory_setpoint.publish(msg)
 
     def timer_callback(self):
+        if self._vehicle_status is None:
+            return
+
         if self._vehicle_status.nav_state != VehicleStatus.NAVIGATION_STATE_OFFBOARD:
             return
 
@@ -207,7 +236,7 @@ class Offboard:
         msg.acceleration = True
         msg.attitude = False
         msg.body_rate = False
-        msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+        msg.timestamp = int(self.node.get_clock().now().nanoseconds / 1000)
         self._pub_offboard_control_mode.publish(msg)
 
     def publish_vehicle_command(self, command, **params) -> None:
@@ -225,5 +254,5 @@ class Offboard:
         msg.source_system = 1
         msg.source_component = 1
         msg.from_external = True
-        msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+        msg.timestamp = int(self.node.get_clock().now().nanoseconds / 1000)
         self._pub_vehicle_command.publish(msg)
