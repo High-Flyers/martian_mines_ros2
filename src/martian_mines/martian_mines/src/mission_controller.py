@@ -100,13 +100,11 @@ class MissionController(Node, Machine):
                 return
             self.offboard.takeoff(self.takeoff_height)
             if self.offboard.is_takeoff_finished(self.takeoff_height):
-                # self.offboard.set_hold_mode()
                 self.takeoff_finished()
                 self.timer_takeoff.cancel()
 
         self.timer_takeoff = self.create_timer(0.02, cb_timer_takeoff)
         self.offboard.takeoff(self.takeoff_height)
-        # self.create_timer(0.2, self.offboard.start)
 
     def on_enter_SCANNING(self):
         self.get_logger().info('State: SCANNING')

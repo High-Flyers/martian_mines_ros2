@@ -53,7 +53,6 @@ class TrajectoryTracker(Node):
         self.offboard.set_offboard_mode()
 
     def callback_timer(self):
-        # current_pose = point_to_np(self.offboard.local_pos.pose.position)
         current_pose = np.array(
             [
                 self.offboard.enu_local_odom.x,

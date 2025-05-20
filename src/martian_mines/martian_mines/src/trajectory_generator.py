@@ -58,8 +58,10 @@ class TrajectoryGenerator(Node):
             Path, "trajectory_generator/path", 1
         )
 
-    def wait_for_transform(self):    
-        future = self.tf_buffer.wait_for_transform_async(self.trajectory_link, "map", rclpy.time.Time())
+    def wait_for_transform(self):
+        future = self.tf_buffer.wait_for_transform_async(
+            self.trajectory_link, "map", rclpy.time.Time()
+        )
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=1.0)
             if future.done():
