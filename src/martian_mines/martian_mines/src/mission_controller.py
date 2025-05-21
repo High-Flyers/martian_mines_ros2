@@ -36,7 +36,7 @@ class MissionController(Node, Machine):
         self.offboard = Offboard(self)
         self.target_figures: List[FigureMsg] = None
         self.bboxes = BoundingBoxLabeledList()
-        self.local_home_pose = PoseStamped()
+        self.local_home_odom = PoseStamped()
 
         self.takeoff_height = self.declare_parameter('takeoff_height', 4).value
         self.target_figure_types = self.declare_parameter('target_figure_types', ['blueBall', 'redBall', 'purpleBall']).value
@@ -48,9 +48,14 @@ class MissionController(Node, Machine):
         self.client_generate_trajectory = self.create_client(Trigger, 'trajectory_generator/generate')
         self.client_figure_finder_start = self.create_client(Trigger, 'figure_finder/start')
         self.client_figure_finder_finish = self.create_client(Trigger, 'figure_finder/finish')
-        self.client_precision_landing_start = self.create_client(Trigger, 'precision_landing/start')
+        # self.client_precision_landing_start = self.create_client(Trigger, 'precision_landing/start')
 
-        for client in [self.client_generate_trajectory, self.client_figure_finder_start, self.client_figure_finder_finish, self.client_precision_landing_start]:
+        for client in [
+            self.client_generate_trajectory,
+            self.client_figure_finder_start,
+            self.client_figure_finder_finish,
+            # self.client_precision_landing_start
+        ]:
             while not client.wait_for_service(timeout_sec=15):
                 self.get_logger().warn(f'Waiting for {client.srv_name} service...')
 
@@ -80,24 +85,32 @@ class MissionController(Node, Machine):
 
     def on_enter_INIT(self):
         self.get_logger().info('State: INIT')
-        self.local_home_pose = self.offboard.local_pos
+        self.offboard.set_offboard_mode()
+        self.local_home_odom = self.offboard.enu_local_odom
         self.takeoff()
 
     def on_enter_TAKEOFF(self):
         self.get_logger().info('State: TAKEOFF')
 
         def cb_timer_takeoff():
+            if not self.offboard.is_ready:
+                return
+            self.offboard.arm()
+            if not self.offboard.is_armed:
+                return
             self.offboard.takeoff(self.takeoff_height)
             if self.offboard.is_takeoff_finished(self.takeoff_height):
+<<<<<<< HEAD
                 self.offboard.set_hold_mode()
                 self.get_logger().info("Takeoff complete. Exiting.")
 
+=======
+>>>>>>> origin/run-mission
                 self.takeoff_finished()
                 self.timer_takeoff.cancel()
 
         self.timer_takeoff = self.create_timer(0.02, cb_timer_takeoff)
         self.offboard.takeoff(self.takeoff_height)
-        self.create_timer(0.2, self.offboard.start)
 
     def on_enter_SCANNING(self):
         self.get_logger().info('State: SCANNING')
@@ -114,9 +127,9 @@ class MissionController(Node, Machine):
 
             target_figure = self.target_figures.pop()
             figure_point = [target_figure.local_x, target_figure.local_y, self.target_figure_approach_height]
-            self.offboard.fly_point(*figure_point, frame_id='start_pose')
+            self.offboard.fly_point(*figure_point)
 
-            if self.offboard.is_point_reached(*figure_point, frame_id='start_pose'):
+            if self.offboard.is_point_reached(*figure_point):
                 self.offboard.set_hold_mode()
                 self.land_figure(target_figure)
                 self.timer_fly_to_figure.cancel()
@@ -132,15 +145,15 @@ class MissionController(Node, Machine):
                 self.pub_precision_landing_bbox.publish(self.bboxes.boxes[0].bbox)
 
         self.timer_figure_landing = self.create_timer(0.02, cb_figure_landing)
-        self.client_precision_landing_start.call_async(Trigger.Request())
+        # self.client_precision_landing_start.call_async(Trigger.Request())
 
     def on_enter_RETURN(self):
         self.get_logger().info('State: RETURN')
 
         def cb_timer_return():
-            self.offboard.fly_point(self.local_home_pose.pose.position.x, self.local_home_pose.pose.position.y, self.takeoff_height)
+            self.offboard.fly_point(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height)
 
-            if self.offboard.is_point_reached(self.local_home_pose.pose.position.x, self.local_home_pose.pose.position.y, self.takeoff_height):
+            if self.offboard.is_point_reached(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height):
                 self.offboard.land()
                 self.timer_return.cancel()
 
