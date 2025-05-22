@@ -32,7 +32,7 @@ class BBoxMapper(Node):
             return None
 
     def bbox_to_ground_position(self, bbox: BoundingBoxLabeled, transform_time=Time()):
-        ray_camera_frame = self.camera_model.projectPixelTo3dRay((bbox.bbox.center.x, bbox.bbox.center.y))
+        ray_camera_frame = self.camera_model.projectPixelTo3dRay((bbox.bbox.center.position.x, bbox.bbox.center.position.y))
         transform = self.get_transform(transform_time)
         if transform:
             vector = Vector3Stamped()

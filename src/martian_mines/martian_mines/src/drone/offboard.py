@@ -1,4 +1,5 @@
 import numpy as np
+
 from quaternion import from_euler_angles, as_euler_angles
 
 import rclpy
@@ -35,11 +36,13 @@ def enu_to_ned_heading(heading):
 
 
 def frd_to_flu_quaternion(x, y, z, w):
+
     q_enu = np.quaternion(float(w), float(x), float(-y), float(-z))
     q_90 = from_euler_angles((0, 0, np.pi / 2))
 
     result = q_90 * q_enu
     return (result.x, result.y, result.z, result.w)
+
 
 def heading_from_quaternion(x, y, z, w):
     q = np.quaternion(float(w), float(x), float(y), float(z))
@@ -48,6 +51,8 @@ def heading_from_quaternion(x, y, z, w):
     return angles[0]
 
 class Offboard:
+    HEARTBEAT_THRESHOLD = 10
+
     def __init__(self, node: Node) -> None:
         px4_qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -58,7 +63,15 @@ class Offboard:
 
         self.node = node
 
-        # Publishers
+        self._landing_target_pose = None 
+
+        self._sub_landing_target_pose = self.node.create_subscription( 
+            PoseStamped,
+            "landing_target/pose",
+            self.landing_target_pose_cb,
+            10
+        )
+
         self._pub_trajectory_setpoint = self.node.create_publisher(
             TrajectorySetpoint, "fmu/in/trajectory_setpoint", px4_qos
         )
@@ -73,7 +86,7 @@ class Offboard:
             ENULocalOdometry, "enu_local_odometry", px4_qos
         )
 
-        # Subscribers
+
         self._sub_vehicle_local_position = self.node.create_subscription(
             VehicleLocalPosition,
             "fmu/out/vehicle_local_position",
@@ -106,10 +119,19 @@ class Offboard:
         self._enu_local_position = None
 
         self.timer = self.node.create_timer(0.1, self.timer_callback)
+        self._heartbeat_counter = 0
 
     @property
     def enu_local_odom(self) -> ENULocalOdometry:
         return self._enu_local_position
+    
+    @property
+    def is_ready(self) -> bool:
+        return self._heartbeat_counter >= self.HEARTBEAT_THRESHOLD
+
+    @property
+    def is_armed(self) -> bool:
+        return self._vehicle_status.arming_state == VehicleStatus.ARMING_STATE_ARMED
 
     def vehicle_local_position_cb(self, msg: VehicleLocalPosition) -> None:
         self._vehicle_local_position = msg
@@ -140,10 +162,6 @@ class Offboard:
     def vehicle_land_detected_cb(self, msg: VehicleLandDetected) -> None:
         self._vehicle_land_detected = msg
 
-    def start(self):
-        self.set_offboard_mode()
-        self.arm()
-
     def takeoff(self, height):
         if self._enu_local_position is None:
             return
@@ -163,14 +181,36 @@ class Offboard:
     def land(self):
         self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
 
+    def landing_target_pose_cb(self, msg: PoseStamped):
+        self._landing_target_pose = msg
+
+    def land_on_target(self):
+
+        if not self._landing_target_pose:
+            self.node.get_logger().warn("Lack of landing target data!")
+            return
+
+        pose = self._landing_target_pose.pose
+        x, y, z = enu_to_ned(pose.position.x, pose.position.y, pose.position.z)
+
+
+        self.publish_vehicle_command(
+            VehicleCommand.VEHICLE_CMD_NAV_LAND,
+            param5=x,  # lokalne X (NED)
+            param6=y,  # lokalne Y
+            param7=z   # lokalne Z
+        )
+
+        self.node.get_logger().info("Landing command sent based on target position")
+
     def return_home(self):
         self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_RETURN_TO_LAUNCH)
 
     def set_hold_mode(self):
-        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=2.0)
+        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=1.0, param2=2.0)
 
     def set_offboard_mode(self):
-        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=6.0)
+        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=1.0, param2=6.0)
 
     def is_takeoff_finished(self, height, epsilon=0.1):
         if self._enu_local_position is None:
@@ -228,6 +268,8 @@ class Offboard:
             return
 
         self.publish_offboard_control_heartbeat_signal()
+        if self._heartbeat_counter < self.HEARTBEAT_THRESHOLD:
+            self._heartbeat_counter += 1
 
     def publish_offboard_control_heartbeat_signal(self):
         msg = OffboardControlMode()
@@ -256,3 +298,15 @@ class Offboard:
         msg.from_external = True
         msg.timestamp = int(self.node.get_clock().now().nanoseconds / 1000)
         self._pub_vehicle_command.publish(msg)
+
+        self.node.get_logger().info(
+        f"Sent VehicleCommand: {command}, params: {[msg.param1, msg.param2, msg.param3, msg.param4, msg.param5, msg.param6, msg.param7]}"
+    )
+ 
+    @property
+    def rel_alt(self):
+        if not self._vehicle_local_position:
+            self.node.get_logger().warn("Lack of local pose - rel_alt unknown")
+            return 0.0
+        return -self._vehicle_local_position.z  # Z in NED: negative above ground
+
