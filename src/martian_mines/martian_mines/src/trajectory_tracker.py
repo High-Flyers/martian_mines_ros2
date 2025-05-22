@@ -68,7 +68,7 @@ class TrajectoryTracker(Node):
 
         if self.pure_pursuit.is_last(current_pose):
             self.offboard.set_hold_mode()
-            self.pub_finished.publish()
+            self.pub_finished.publish(Empty())
             self.destroy_timer(self.timer)
 
 
