@@ -38,13 +38,13 @@ def generate_launch_description():
                 output="screen",
                 parameters=[{"plot": LaunchConfiguration("plot_trajectory")}],
             ),
-            # Node(
-            #     package="martian_mines",
-            #     executable="trajectory_tracker",
-            #     name="trajectory_tracker",
-            #     output="screen",
-            #     remappings=[("trajectory_tracker/path", "trajectory_generator/path")],
-            # ),
+            Node(
+                package="martian_mines",
+                executable="trajectory_tracker",
+                name="trajectory_tracker",
+                output="screen",
+                remappings=[("trajectory_tracker/path", "trajectory_generator/path")],
+            ),
             ExecuteProcess(
                 cmd=[
                     FindExecutable(name="ros2"),
