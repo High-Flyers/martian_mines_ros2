@@ -85,6 +85,7 @@ class MissionController(Node, Machine):
 
     def on_enter_INIT(self):
         self.get_logger().info('State: INIT')
+        self.offboard.set_offboard_mode()
         self.local_home_odom = self.offboard.enu_local_odom
         self.takeoff()
 
@@ -92,15 +93,20 @@ class MissionController(Node, Machine):
         self.get_logger().info('State: TAKEOFF')
 
         def cb_timer_takeoff():
+            if not self.offboard.is_ready:
+                return
+            self.offboard.arm()
+            if not self.offboard.is_armed:
+                return
             self.offboard.takeoff(self.takeoff_height)
             if self.offboard.is_takeoff_finished(self.takeoff_height):
-                self.offboard.set_hold_mode()
                 self.takeoff_finished()
+                self.offboard.set_hold_mode()
                 self.timer_takeoff.cancel()
 
         self.timer_takeoff = self.create_timer(0.02, cb_timer_takeoff)
         self.offboard.takeoff(self.takeoff_height)
-        self.create_timer(0.2, self.offboard.start)
+
 
     def on_enter_SCANNING(self):
         self.get_logger().info('State: SCANNING')
