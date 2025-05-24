@@ -14,4 +14,7 @@ fi
 colcon build ${SYMLINK_FLAG} \
     --packages-skip \
         px4_msgs \
-        microxrcedds_agent
+        microxrcedds_agent \
+        realsense2_camera_msgs \
+        realsense2_camera \
+        realsense2_description
