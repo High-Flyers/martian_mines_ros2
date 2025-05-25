@@ -86,6 +86,9 @@ class MissionController(Node, Machine):
     def on_enter_INIT(self):
         self.get_logger().info('State: INIT')
         self.offboard.set_offboard_mode()
+        while self.offboard.enu_local_odom is None:
+            self.get_logger().info('Waiting for local home position...')
+            rclpy.spin_once(self, timeout_sec=0.1)
         self.local_home_odom = self.offboard.enu_local_odom
         self.takeoff()
 
@@ -118,7 +121,9 @@ class MissionController(Node, Machine):
 
         def cb_timer_fly_to_figure():
             if not self.target_figures:
-                self.return_home()
+                if self.state != States.RETURN:
+                    self.return_home()
+                self.timer_fly_to_figure.cancel()
                 return
 
             target_figure = self.target_figures.pop()
