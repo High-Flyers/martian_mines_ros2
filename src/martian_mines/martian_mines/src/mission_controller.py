@@ -150,13 +150,21 @@ class MissionController(Node, Machine):
 
     def on_enter_RETURN(self):
         self.get_logger().info('State: RETURN')
+        self.return_stage = "fly_to_point"
 
         def cb_timer_return():
-            self.offboard.fly_point(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height)
+            if self.return_stage == "fly_to_point":
+                self.offboard.fly_point(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height)
+                if self.offboard.is_point_reached(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height):
+                    self.get_logger().info('Point reached, attempting to land')
+                    self.return_stage = "landing"
 
-            if self.offboard.is_point_reached(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height):
-                self.offboard.land()
-                self.timer_return.cancel()
+            elif self.return_stage == "landing":
+                if self.offboard.is_landed():
+                    self.get_logger().info('Landing confirmed, cancelling timer')
+                    self.timer_return.cancel()
+                else:
+                    self.offboard.land()
 
         self.timer_return = self.create_timer(0.02, cb_timer_return)
         self.create_timer(0.2, self.offboard.set_offboard_mode)
