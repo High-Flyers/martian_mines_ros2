@@ -85,6 +85,10 @@ class MissionController(Node, Machine):
 
     def on_enter_INIT(self):
         self.get_logger().info('State: INIT')
+        self.offboard.set_offboard_mode()
+        while self.offboard.enu_local_odom is None:
+            self.get_logger().info('Waiting for local home position...')
+            rclpy.spin_once(self, timeout_sec=0.1)
         self.local_home_odom = self.offboard.enu_local_odom
         self.takeoff()
 
@@ -92,15 +96,20 @@ class MissionController(Node, Machine):
         self.get_logger().info('State: TAKEOFF')
 
         def cb_timer_takeoff():
+            if not self.offboard.is_ready:
+                return
+            self.offboard.arm()
+            if not self.offboard.is_armed:
+                return
             self.offboard.takeoff(self.takeoff_height)
             if self.offboard.is_takeoff_finished(self.takeoff_height):
-                self.offboard.set_hold_mode()
                 self.takeoff_finished()
+                self.offboard.set_hold_mode()
                 self.timer_takeoff.cancel()
 
         self.timer_takeoff = self.create_timer(0.02, cb_timer_takeoff)
         self.offboard.takeoff(self.takeoff_height)
-        self.create_timer(0.2, self.offboard.start)
+
 
     def on_enter_SCANNING(self):
         self.get_logger().info('State: SCANNING')
@@ -112,7 +121,9 @@ class MissionController(Node, Machine):
 
         def cb_timer_fly_to_figure():
             if not self.target_figures:
-                self.return_home()
+                if self.state != States.RETURN:
+                    self.return_home()
+                self.timer_fly_to_figure.cancel()
                 return
 
             target_figure = self.target_figures.pop()
@@ -139,13 +150,21 @@ class MissionController(Node, Machine):
 
     def on_enter_RETURN(self):
         self.get_logger().info('State: RETURN')
+        self.return_stage = "fly_to_point"
 
         def cb_timer_return():
-            self.offboard.fly_point(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height)
+            if self.return_stage == "fly_to_point":
+                self.offboard.fly_point(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height)
+                if self.offboard.is_point_reached(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height):
+                    self.get_logger().info('Point reached, attempting to land')
+                    self.return_stage = "landing"
 
-            if self.offboard.is_point_reached(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height):
-                self.offboard.land()
-                self.timer_return.cancel()
+            elif self.return_stage == "landing":
+                if self.offboard.is_landed():
+                    self.get_logger().info('Landing confirmed, cancelling timer')
+                    self.timer_return.cancel()
+                else:
+                    self.offboard.land()
 
         self.timer_return = self.create_timer(0.02, cb_timer_return)
         self.create_timer(0.2, self.offboard.set_offboard_mode)
