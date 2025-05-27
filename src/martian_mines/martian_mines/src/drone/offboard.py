@@ -47,6 +47,14 @@ def heading_from_quaternion(x, y, z, w):
 
     return angles[0]
 
+def offboard_command(func):
+    def wrapper(self, *args, **kwargs):
+        if self.is_in_offboard:
+            return func(self, *args, **kwargs)
+
+    return wrapper
+
+
 class Offboard:
     HEARTBEAT_THRESHOLD = 10
 
@@ -103,7 +111,7 @@ class Offboard:
 
         self._vehicle_local_position = None
         self._vehicle_attitude = None
-        self._vehicle_status = None
+        self._vehicle_status = VehicleStatus()
         self._vehicle_land_detected = None
         self._enu_local_position = None
 
@@ -121,6 +129,10 @@ class Offboard:
     @property
     def is_armed(self) -> bool:
         return self._vehicle_status.arming_state == VehicleStatus.ARMING_STATE_ARMED
+    
+    @property
+    def is_in_offboard(self):
+        return self._vehicle_status.nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD
 
     def vehicle_local_position_cb(self, msg: VehicleLocalPosition) -> None:
         self._vehicle_local_position = msg
@@ -206,6 +218,7 @@ class Offboard:
         
         return self._vehicle_land_detected.landed
 
+    @offboard_command
     def fly_point(self, x, y, z, heading=None):
         if self._enu_local_position is None:
             return
@@ -216,6 +229,7 @@ class Offboard:
         msg.timestamp =int(self.node.get_clock().now().nanoseconds / 1000)
         self._pub_trajectory_setpoint.publish(msg)
 
+    @offboard_command
     def fly_velocity(self, vx, vy, vz, heading=None):
         if self._enu_local_position is None:
             return
@@ -228,16 +242,11 @@ class Offboard:
         self._pub_trajectory_setpoint.publish(msg)
 
     def timer_callback(self):
-        if self._vehicle_status is None:
-            return
-
-        if self._vehicle_status.nav_state != VehicleStatus.NAVIGATION_STATE_OFFBOARD:
-            return
-
         self.publish_offboard_control_heartbeat_signal()
         if self._heartbeat_counter < self.HEARTBEAT_THRESHOLD:
             self._heartbeat_counter += 1
 
+    @offboard_command
     def publish_offboard_control_heartbeat_signal(self):
         msg = OffboardControlMode()
         msg.position = True
