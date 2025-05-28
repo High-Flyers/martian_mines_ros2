@@ -47,7 +47,7 @@ RUN cmake \
     && make -j$(($(nproc)-1)) all \
     && make install
 
-FROM ros:humble-ros-base
+FROM ros:humble-ros-base AS base
 
 COPY --from=build-librealsense /opt/librealsense /usr/local/
 COPY --from=build-librealsense /usr/lib/python3/dist-packages/pyrealsense2 /usr/lib/python3/dist-packages/pyrealsense2
@@ -65,6 +65,7 @@ RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
     openssh-client \
     build-essential \
     cmake \
+    udev \
     ros-dev-tools \
     python3-pip \
     ros-humble-geographic-msgs \
@@ -93,6 +94,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ENV ROS_WORKSPACE=/home/${USERNAME}/ws
 
 ## Install realsense-ros wrapper
+RUN mkdir -p ${ROS_WORKSPACE}/src
 WORKDIR ${ROS_WORKSPACE}/src
 RUN git clone --depth 1 https://github.com/IntelRealSense/realsense-ros.git -b 4.55.1
 

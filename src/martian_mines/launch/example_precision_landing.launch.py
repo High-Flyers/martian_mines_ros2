@@ -46,22 +46,6 @@ def generate_launch_description():
         ),
     ])
 
-    # Conditional remaps (in real-world mode)
-    #remap_real_world = [
-    #    Node(
-    #        package='tf2_ros',
-    #        executable='static_transform_publisher',
-    #        name='remap_camera',
-    #        arguments=['camera/image_raw', 'color/image_raw']
-    #    ),
-    #    Node(
-    #        package='tf2_ros',
-    #        executable='static_transform_publisher',
-    #        name='remap_camera_info',
-    #        arguments=['camera/camera_info', 'color/camera_info']
-    #    )
-    #]
-
     return LaunchDescription([
         real_world_arg,
         no_start_pose_arg,

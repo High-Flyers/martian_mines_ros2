@@ -10,7 +10,7 @@ class CameraRecorder(Node):
         super().__init__('camera_recorder')
         self.subscription = self.create_subscription(
             Image,
-            '/camera/camera/color/image_raw',  # Adjust if needed
+            '/color/image_raw',  # Adjust if needed
             self.listener_callback,
             10)
         self.bridge = CvBridge()
