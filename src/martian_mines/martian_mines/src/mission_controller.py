@@ -104,7 +104,6 @@ class MissionController(Node, Machine):
             self.offboard.takeoff(self.takeoff_height)
             if self.offboard.is_takeoff_finished(self.takeoff_height):
                 self.takeoff_finished()
-                self.offboard.set_hold_mode()
                 self.timer_takeoff.cancel()
 
         self.timer_takeoff = self.create_timer(0.02, cb_timer_takeoff)
@@ -131,12 +130,12 @@ class MissionController(Node, Machine):
             self.offboard.fly_point(*figure_point)
 
             if self.offboard.is_point_reached(*figure_point):
-                self.offboard.set_hold_mode()
+                # self.offboard.set_hold_mode()
                 self.land_figure(target_figure)
                 self.timer_fly_to_figure.cancel()
 
         self.timer_fly_to_figure = self.create_timer(0.02, cb_timer_fly_to_figure)
-        self.create_timer(0.2, self.offboard.set_offboard_mode)
+        # self.create_timer(0.2, self.offboard.set_offboard_mode)
 
     def on_enter_FIGURE_LANDING(self, target_figure: FigureMsg):
         self.get_logger().info('State: FIGURE_LANDING')
@@ -150,24 +149,26 @@ class MissionController(Node, Machine):
 
     def on_enter_RETURN(self):
         self.get_logger().info('State: RETURN')
-        self.return_stage = "fly_to_point"
+        # self.offboard.return_home()
+        # self.return_stage = "fly_to_point"
 
         def cb_timer_return():
-            if self.return_stage == "fly_to_point":
-                self.offboard.fly_point(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height)
-                if self.offboard.is_point_reached(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height):
-                    self.get_logger().info('Point reached, attempting to land')
-                    self.return_stage = "landing"
+            self.offboard.return_home()
+            # if self.return_stage == "fly_to_point":
+            #     self.offboard.fly_point(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height)
+            #     if self.offboard.is_point_reached(self.local_home_odom.x, self.local_home_odom.y, self.takeoff_height):
+            #         self.get_logger().info('Point reached, attempting to land')
+            #         self.return_stage = "landing"
 
-            elif self.return_stage == "landing":
-                if self.offboard.is_landed():
-                    self.get_logger().info('Landing confirmed, cancelling timer')
-                    self.timer_return.cancel()
-                else:
-                    self.offboard.land()
+            # elif self.return_stage == "landing":
+            #     if self.offboard.is_landed():
+            #         self.get_logger().info('Landing confirmed, cancelling timer')
+            #         self.timer_return.cancel()
+            #     else:
+            #         self.offboard.land()
 
         self.timer_return = self.create_timer(0.02, cb_timer_return)
-        self.create_timer(0.2, self.offboard.set_offboard_mode)
+        # self.create_timer(0.2, self.offboard.set_offboard_mode)
 
     def cb_precision_landing_finished(self, _):
         self.timer_figure_landing.cancel()

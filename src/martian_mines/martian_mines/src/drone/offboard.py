@@ -55,7 +55,17 @@ def offboard_command(func):
     return wrapper
 
 
-class Offboard:
+class OffboardMeta(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+
+class Offboard(metaclass=OffboardMeta):
     HEARTBEAT_THRESHOLD = 10
 
     def __init__(self, node: Node) -> None:
