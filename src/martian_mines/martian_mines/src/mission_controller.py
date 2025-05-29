@@ -28,21 +28,22 @@ class MissionController(Node):
     
         self.state_idle = StateIdle(self)
         self.state_start = StateStart(self.offboard)
-        self.state_scanning = StateScanning(self)
+        self.state_scanning = StateScanning(self, self.offboard)
         self.state_return = StateReturn(self.offboard)
 
         transitions: Transitions = {
             self.state_idle: {
                 StateAction.CONTINUE: self.state_idle,
-                StateAction.FINISHED: self.state_start
+                StateAction.FINISHED: self.state_start,
             },
             self.state_start: {
                 StateAction.CONTINUE: self.state_start,
-                StateAction.FINISHED: self.state_scanning,
+                StateAction.FINISHED: self.state_scanning
             },
             self.state_scanning: {
                 StateAction.CONTINUE: self.state_scanning,
                 StateAction.FINISHED: self.state_return,
+                StateAction.ABORT: self.state_return,
             },
             self.state_return: {
                 StateAction.CONTINUE: self.state_return,

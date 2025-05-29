@@ -1,6 +1,5 @@
 import rclpy
 from rclpy.node import Node
-import matplotlib
 import time
 
 from sensor_msgs.msg import CameraInfo
@@ -11,7 +10,7 @@ from tf2_ros import Buffer, TransformListener
 from tf2_geometry_msgs import PoseStamped
 
 from .drone.scan_trajectory import ScanTrajectory
-from .utils.environment import Environemnt
+from .utils.environment import Environment
 
 
 class TrajectoryGenerator(Node):
@@ -39,7 +38,7 @@ class TrajectoryGenerator(Node):
         self.get_logger().info("Camera info received!")
 
         self.declare_parameter("altitude", 4.0)
-        self.declare_parameter("overlap", 0.1)
+        self.declare_parameter("overlap", 0.5)
         self.declare_parameter("offset", 1.0)
 
         self.scan_trajectory = self.create_scan_trajectory()
@@ -58,6 +57,9 @@ class TrajectoryGenerator(Node):
             Path, "trajectory_generator/path", 1
         )
 
+        self.waypoints = self.scan_trajectory.generate_optimized_trajectory()
+        self.get_logger().error("waypoints: " + str(self.waypoints.size))
+
     def wait_for_transform(self):
         future = self.tf_buffer.wait_for_transform_async(
             self.trajectory_link, "map", rclpy.time.Time()
@@ -68,9 +70,9 @@ class TrajectoryGenerator(Node):
                 return
 
     def get_camera_model(self, msg):
-        self.camera_model.fromCameraInfo(msg)
-        self.camera_info_received = True
-        self.destroy_subscription(self.subscription)
+        if not self.camera_info_received:
+            self.camera_model.fromCameraInfo(msg)
+            self.camera_info_received = True
 
     def wait_for_camera_info(self):
         while not self.camera_info_received and rclpy.ok():
@@ -82,7 +84,7 @@ class TrajectoryGenerator(Node):
         overlap = self.get_parameter("overlap").get_parameter_value().double_value
         offset = self.get_parameter("offset").get_parameter_value().double_value
 
-        environment = Environemnt(0, 0)
+        environment = Environment(0, 0)
         polygon_coords = [
             environment.left_lower_ball,
             environment.left_upper_ball,
@@ -100,14 +102,14 @@ class TrajectoryGenerator(Node):
 
     def generate_trajectory(self, _, response):
         try:
-            waypoints = self.scan_trajectory.generate_optimized_trajectory()
+            # waypoints = self.scan_trajectory.generate_optimized_trajectory()
 
             path = Path()
             path.header.stamp = self.get_clock().now().to_msg()
             path.header.frame_id = "map"
             path.poses = []
 
-            for waypoint in waypoints:
+            for waypoint in self.waypoints:
                 pose = PoseStamped()
                 pose.header.stamp = self.get_clock().now().to_msg()
                 pose.header.frame_id = self.trajectory_link
@@ -128,9 +130,9 @@ class TrajectoryGenerator(Node):
 
         return response
 
-    def plot(self):
-        waypoints = self.scan_trajectory.generate_optimized_trajectory()
-        self.scan_trajectory.plot(waypoints)
+    # def plot(self):
+    #     waypoints = self.scan_trajectory.generate_optimized_trajectory()
+    #     self.scan_trajectory.plot(waypoints)
 
 
 def main(args=None):
@@ -138,16 +140,6 @@ def main(args=None):
     trajectory_generator = TrajectoryGenerator()
 
     try:
-        plot = (
-            trajectory_generator.get_parameter("plot").get_parameter_value().bool_value
-            if trajectory_generator.has_parameter("plot")
-            else False
-        )
-
-        if plot:
-            matplotlib.use("TkAgg")
-            trajectory_generator.plot()
-
         rclpy.spin(trajectory_generator)
     except KeyboardInterrupt:
         trajectory_generator.get_logger().info("Shutting down Trajectory Generator")

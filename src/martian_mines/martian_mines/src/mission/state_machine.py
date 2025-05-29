@@ -5,6 +5,7 @@ from enum import Enum, auto
 class StateAction(Enum):
     CONTINUE = (auto(),)
     FINISHED = (auto(),)
+    ABORT = (auto(),)
 
 
 class State(ABC):
