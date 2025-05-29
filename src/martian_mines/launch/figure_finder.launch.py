@@ -29,10 +29,6 @@ def generate_launch_description():
             executable="detection",
             name="detection",
             output="screen",
-            #### TO DO ####
-            #### remap condition if real world == "true"
-            #remappings=[("/camera/image_raw", "/color/image_raw"),
-            #("/camera/camera_info", "/color/camera_info")]
         ),
         Node(
             package="martian_mines",

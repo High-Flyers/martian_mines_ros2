@@ -18,5 +18,8 @@ tf_start_pose:
   ros__parameters:
     drone_z_offset: -0.2
 
+camera_remap:
+  ros__parameters:
+    input_topic: /camera/camera
 #additional settings
 #upload_data: true

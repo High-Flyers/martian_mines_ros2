@@ -1,0 +1,7 @@
+<CycloneDDS>
+  <Domain>
+    <General>
+      <DontRoute>false</DontRoute> <!-- Allow inter-machine routing -->
+    </General>
+  </Domain>
+</CycloneDDS>
