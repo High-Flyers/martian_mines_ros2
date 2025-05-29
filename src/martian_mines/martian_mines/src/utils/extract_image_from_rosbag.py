@@ -22,7 +22,7 @@ class ImageFromBag:
 
         # Pobranie metadanych i dostępnych tematów
         topics_info = reader.get_all_topics_and_types()
-        topic_to_read = "/uav0/color/image_raw"
+        topic_to_read = "/color/image_raw"
 
         available_topics = [topic.name for topic in topics_info]
         if topic_to_read not in available_topics:
