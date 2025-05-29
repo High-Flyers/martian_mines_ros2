@@ -54,7 +54,6 @@ COPY --from=build-librealsense /usr/lib/python3/dist-packages/pyrealsense2 /usr/
 COPY --from=build-librealsense /usr/src/librealsense/config/99-realsense-libusb.rules /etc/udev/rules.d/
 COPY --from=build-librealsense /usr/src/librealsense/config/99-realsense-d4xx-mipi-dfu.rules /etc/udev/rules.d/
 
-
 ARG USERNAME=highflyers
 ARG ROS_DISTRO=humble
 ARG USER_UID=1000
@@ -72,6 +71,7 @@ RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
     ros-humble-vision-msgs \
     ros-humble-std-msgs \
     ros-humble-image-geometry \
+    ros-humble-rmw-cyclonedds-cpp \
     ros-humble-launch \
     ros-humble-launch-xml \
     ros-humble-launch-ros \
@@ -110,7 +110,6 @@ RUN sudo apt-get update && \
 
 # Build
 WORKDIR $ROS_WORKSPACE
-# hadolint ignore=SC1091
 RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" && \
     colcon build
 
@@ -120,12 +119,18 @@ RUN pwd
 COPY . martian_mines_ros2
 
 WORKDIR $ROS_WORKSPACE
-# hadolint ignore=SC1091
 RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" 
 
 RUN echo "source \"/opt/ros/${ROS_DISTRO}/setup.bash\"" >> "/home/${USERNAME}/.bashrc" && \
     echo "source \"${ROS_WORKSPACE}/install/setup.bash\"" >> "/home/${USERNAME}/.bashrc"
 
 RUN sudo sed -i '$i source $ROS_WORKSPACE/install/setup.bash' /ros_entrypoint.sh
+
+RUN sudo mkdir -p /usr/local/share/middleware_profiles
+COPY middleware_profiles/cyclone_profile.xml /usr/local/share/middleware_profiles/
+
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+ENV CYCLONEDDS_URI="file:///usr/local/share/middleware_profiles/cyclone_profile.xml"
+
 
 ENTRYPOINT ["/ros_entrypoint.sh"]

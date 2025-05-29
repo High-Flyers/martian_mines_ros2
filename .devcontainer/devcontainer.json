@@ -5,7 +5,7 @@
     "runArgs": [
         "--network=host",
         "--ipc=host",
-        "--volume=/dev:/dev",
+        "--volume=/dev/bus/usb/:/dev/bus/usb/",
         "--volume=/tmp/.X11-unix:/tmp/.X11-unix",
         "${localEnv:DOCKER_GPU_PARAM}",
         "--privileged"
