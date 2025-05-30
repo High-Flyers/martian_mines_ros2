@@ -42,14 +42,14 @@ class MissionController(Node):
             },
             self.state_start: {
                 StateAction.CONTINUE: self.state_start,
-                StateAction.FINISHED: self.state_collect,
+                StateAction.FINISHED: self.state_scanning,
                 StateAction.TAKEOFF: self.state_deliver,
             },
-            # self.state_scanning: {
-            #     StateAction.CONTINUE: self.state_scanning,
-            #     StateAction.FINISHED: self.state_collect,
-            #     StateAction.ABORT: self.state_return,
-            # },
+            self.state_scanning: {
+                StateAction.CONTINUE: self.state_scanning,
+                StateAction.FINISHED: self.state_collect,
+                StateAction.ABORT: self.state_return,
+            },
             self.state_collect: {
                 StateAction.CONTINUE: self.state_collect,
                 StateAction.TAKEOFF: self.state_start,
