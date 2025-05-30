@@ -26,7 +26,7 @@ class TrajectoryGenerator(Node):
         )
 
         self.subscription = self.create_subscription(
-            CameraInfo, "/camera_info", self.get_camera_model, 15
+            CameraInfo, "/color/camera_info", self.get_camera_model, 15
         )
 
         self.camera_model = PinholeCameraModel()
