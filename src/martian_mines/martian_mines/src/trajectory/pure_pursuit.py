@@ -63,13 +63,11 @@ class PurePursuit:
 
     def is_last(self, current_pose: np.ndarray) -> bool:
         last_waypoint = self.trajectory[-1]
-        closest_point = self.trajectory.segment.get_closest_point(last_waypoint.point)
-        closest_waypoint = Waypoint(closest_point, self.trajectory.segment)
-        trajectory_distance = self.trajectory.get_distance(closest_waypoint, last_waypoint)
+        if self.trajectory.index < len(self.trajectory.segments) - 1:
+            return False
+        
         euclidean_distance = np.linalg.norm(last_waypoint.point - current_pose)
-
-        return bool(trajectory_distance < self.lookahead_distance) \
-            and bool(euclidean_distance < self.lookahead_distance)
+        return euclidean_distance < self.lookahead_distance
     
     def finished(self, current_pose: np.ndarray, epsilon=0.1) -> bool:
         euclidean_distance = np.linalg.norm(self.target_point - current_pose)

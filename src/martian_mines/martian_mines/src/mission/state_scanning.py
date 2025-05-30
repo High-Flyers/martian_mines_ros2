@@ -47,6 +47,7 @@ class StateScanning(State):
         self.scan_active = False
         self.trajectory_finished = False
         self.trajectory_set = False
+        self.heading = None
 
     def handle(self) -> StateAction:
         if not self.offboard.is_in_offboard:
@@ -61,11 +62,12 @@ class StateScanning(State):
                 self.future_generate_trajectory = None
                 self.future_figure_finder_start = None
                 self.scan_active = True
-        
-        if self.trajectory is not None:
+
+        if self.trajectory is not None and not self.trajectory_finished:
             if not self.trajectory_set:
                 self.pure_pursuit.set_trajectory(self.trajectory)
                 self.trajectory_set = True
+                self.heading = self.offboard.enu_local_odom.heading
 
             current_pose = np.array(
                 [
@@ -77,9 +79,10 @@ class StateScanning(State):
             self.pure_pursuit.step(current_pose)
 
             velocities = self.pure_pursuit.get_velocities(current_pose, self.velocity)
-            self.offboard.fly_velocity(*velocities)
+            self.offboard.fly_velocity(*velocities, heading=self.heading)
 
             if self.pure_pursuit.is_last(current_pose):
+                self.offboard.hover()
                 self.trajectory_finished = True
 
         if self.trajectory_finished:
@@ -91,9 +94,11 @@ class StateScanning(State):
                 self.trajectory = None
                 self.future_figure_finder_finish = None
                 self.scan_active = False
+                self.heading = None
                 return StateAction.FINISHED
         
         return StateAction.CONTINUE
 
     def trajectory_cb(self, msg: Path) -> None:
-        self.trajectory = path_to_trajectory(msg)
+        if self.trajectory is None:
+            self.trajectory = path_to_trajectory(msg)

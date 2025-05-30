@@ -26,7 +26,7 @@ class TrajectoryGenerator(Node):
         )
 
         self.subscription = self.create_subscription(
-            CameraInfo, "/color/camera_info", self.get_camera_model, 15
+            CameraInfo, "/camera_info", self.get_camera_model, 15
         )
 
         self.camera_model = PinholeCameraModel()
@@ -70,9 +70,8 @@ class TrajectoryGenerator(Node):
                 return
 
     def get_camera_model(self, msg):
-        if not self.camera_info_received:
-            self.camera_model.fromCameraInfo(msg)
-            self.camera_info_received = True
+        self.camera_model.fromCameraInfo(msg)
+        self.camera_info_received = True
 
     def wait_for_camera_info(self):
         while not self.camera_info_received and rclpy.ok():
@@ -92,7 +91,7 @@ class TrajectoryGenerator(Node):
             environment.right_lower_ball,
         ]
         trajectory = ScanTrajectory(
-            polygon_coords, self.camera_model.fx(), self.camera_model.fy()
+            polygon_coords, 630, 630
         )
         trajectory.set_altitude(altitude)
         trajectory.set_overlap(overlap)
@@ -102,8 +101,6 @@ class TrajectoryGenerator(Node):
 
     def generate_trajectory(self, _, response):
         try:
-            # waypoints = self.scan_trajectory.generate_optimized_trajectory()
-
             path = Path()
             path.header.stamp = self.get_clock().now().to_msg()
             path.header.frame_id = "map"
@@ -129,11 +126,6 @@ class TrajectoryGenerator(Node):
             response.message = ""
 
         return response
-
-    # def plot(self):
-    #     waypoints = self.scan_trajectory.generate_optimized_trajectory()
-    #     self.scan_trajectory.plot(waypoints)
-
 
 def main(args=None):
     rclpy.init(args=args)
