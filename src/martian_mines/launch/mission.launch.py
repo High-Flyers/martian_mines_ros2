@@ -31,10 +31,10 @@ def generate_launch_description():
             package="martian_mines", executable="trajectory_generator", output="screen", 
             # remappings=[("camera/camera_info", "/camera_info")]
         ),
-        launch_ros.actions.Node(
-            package="martian_mines", executable="trajectory_tracker", output="screen",
-            remappings=[("trajectory_tracker/path", "trajectory_generator/path")]
-        ),
+        # launch_ros.actions.Node(
+        #     package="martian_mines", executable="trajectory_tracker", output="screen",
+        #     remappings=[("trajectory_tracker/path", "trajectory_generator/path")]
+        # ),
         # launch_ros.actions.Node(
         #     package="martian_mines", executable="report_uploader", output="screen"
         # ),
