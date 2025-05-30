@@ -7,6 +7,8 @@ class StateAction(Enum):
     FINISHED = (auto(),)
     ABORT = (auto(),)
 
+    TAKEOFF = (auto(), )
+
 
 
 class State(ABC):
