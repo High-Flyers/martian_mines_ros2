@@ -8,6 +8,7 @@ class StateAction(Enum):
     ABORT = (auto(),)
 
 
+
 class State(ABC):
     def __init__(self, name: str) -> None:
         self._name = name
@@ -28,7 +29,7 @@ class State(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def handle(self) -> Enum:
+    def handle(self, data: dict) -> tuple[Enum, dict]:
         raise NotImplementedError
 
 
@@ -62,6 +63,7 @@ class StateMachine:
         self._transitions = transitions
         self._state = state
         self._event = event
+        self._data = {}
 
     @property
     def state(self) -> State:
@@ -88,7 +90,7 @@ class StateMachine:
 
     def __handle_transition(self):
         transition_state = self._transitions[self._state][self._event]
-        self._event = transition_state.handle()
+        self._event, self._data = transition_state.handle(self._data)
         self._state = transition_state
 
     def __is_state_exist(self, state: State) -> bool:

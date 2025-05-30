@@ -11,12 +11,13 @@ class StateIdle(State):
         self.start_sub = self.node.create_subscription(Empty, "mission_start", self.mission_start_cb, 10)
         self.start_mission = False
 
-    def handle(self) -> StateAction:
+    def handle(self, data: dict) -> StateAction:
         if self.start_mission:
+            data = dict()
             self.start_mission = False
-            return StateAction.FINISHED
+            return StateAction.FINISHED, data
 
-        return StateAction.CONTINUE
+        return StateAction.CONTINUE, data
         
     def mission_start_cb(self, msg: Empty) -> None:
         self.start_mission = True

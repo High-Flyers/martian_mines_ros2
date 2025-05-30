@@ -47,11 +47,10 @@ class StateScanning(State):
         self.scan_active = False
         self.trajectory_finished = False
         self.trajectory_set = False
-        self.heading = None
 
-    def handle(self) -> StateAction:
+    def handle(self, data: dict) -> StateAction:
         if not self.offboard.is_in_offboard:
-            return StateAction.ABORT
+            return StateAction.ABORT, data
 
         if not self.scan_active:
             if self.future_figure_finder_start is None and self.future_generate_trajectory is None:
@@ -67,7 +66,6 @@ class StateScanning(State):
             if not self.trajectory_set:
                 self.pure_pursuit.set_trajectory(self.trajectory)
                 self.trajectory_set = True
-                self.heading = self.offboard.enu_local_odom.heading
 
             current_pose = np.array(
                 [
@@ -79,7 +77,7 @@ class StateScanning(State):
             self.pure_pursuit.step(current_pose)
 
             velocities = self.pure_pursuit.get_velocities(current_pose, self.velocity)
-            self.offboard.fly_velocity(*velocities, heading=self.heading)
+            self.offboard.fly_velocity(*velocities, heading=data["home_odometry"].heading)
 
             if self.pure_pursuit.is_last(current_pose):
                 self.offboard.hover()
@@ -95,9 +93,9 @@ class StateScanning(State):
                 self.future_figure_finder_finish = None
                 self.scan_active = False
                 self.heading = None
-                return StateAction.FINISHED
+                return StateAction.FINISHED, data
         
-        return StateAction.CONTINUE
+        return StateAction.CONTINUE, data
 
     def trajectory_cb(self, msg: Path) -> None:
         if self.trajectory is None:

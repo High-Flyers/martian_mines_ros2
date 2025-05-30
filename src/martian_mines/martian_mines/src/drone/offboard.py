@@ -173,11 +173,11 @@ class Offboard(metaclass=OffboardMeta):
     def vehicle_land_detected_cb(self, msg: VehicleLandDetected) -> None:
         self._vehicle_land_detected = msg
 
-    def takeoff(self, height):
+    def takeoff(self, height, heading=None):
         if self._enu_local_odometry is None:
             return
 
-        self.fly_point(self._enu_local_odometry.x, self._enu_local_odometry.y, height)
+        self.fly_point(self._enu_local_odometry.x, self._enu_local_odometry.y, height, heading)
 
     def arm(self):
         self.publish_vehicle_command(
