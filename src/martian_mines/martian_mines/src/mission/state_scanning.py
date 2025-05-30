@@ -48,9 +48,9 @@ class StateScanning(State):
         self.trajectory_finished = False
         self.trajectory_set = False
 
-    def handle(self) -> StateAction:
+    def handle(self, data: dict) -> StateAction:
         if not self.offboard.is_in_offboard:
-            return StateAction.ABORT
+            return StateAction.ABORT, data
 
         if not self.scan_active:
             if self.future_figure_finder_start is None and self.future_generate_trajectory is None:
@@ -61,8 +61,8 @@ class StateScanning(State):
                 self.future_generate_trajectory = None
                 self.future_figure_finder_start = None
                 self.scan_active = True
-        
-        if self.trajectory is not None:
+
+        if self.trajectory is not None and not self.trajectory_finished:
             if not self.trajectory_set:
                 self.pure_pursuit.set_trajectory(self.trajectory)
                 self.trajectory_set = True
@@ -77,9 +77,10 @@ class StateScanning(State):
             self.pure_pursuit.step(current_pose)
 
             velocities = self.pure_pursuit.get_velocities(current_pose, self.velocity)
-            self.offboard.fly_velocity(*velocities)
+            self.offboard.fly_velocity(*velocities, heading=data["home_odometry"].heading)
 
             if self.pure_pursuit.is_last(current_pose):
+                self.offboard.hover()
                 self.trajectory_finished = True
 
         if self.trajectory_finished:
@@ -91,9 +92,11 @@ class StateScanning(State):
                 self.trajectory = None
                 self.future_figure_finder_finish = None
                 self.scan_active = False
-                return StateAction.FINISHED
+                self.heading = None
+                return StateAction.FINISHED, data
         
-        return StateAction.CONTINUE
+        return StateAction.CONTINUE, data
 
     def trajectory_cb(self, msg: Path) -> None:
-        self.trajectory = path_to_trajectory(msg)
+        if self.trajectory is None:
+            self.trajectory = path_to_trajectory(msg)

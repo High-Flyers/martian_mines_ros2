@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import math
 
 from shapely.geometry import Polygon, LineString
@@ -10,8 +9,8 @@ class ScanTrajectory:
         self.altitude = 1.0
         self.overlap = 0.0
         self.start_point = (0, 0)
-        self.fov_x = np.radians(90)
-        self.fov_y = np.radians(65)
+        self.fov_x = fov_x
+        self.fov_y = fov_y
         polygon_coords = [(-y, x) for x, y in polygon_coords]
 
         self.polygon = Polygon(polygon_coords)
@@ -67,39 +66,3 @@ class ScanTrajectory:
 
         return waypoints
 
-    # def plot(self, waypoints):
-    #     fig, ax = plt.subplots()
-
-    #     x, y = self.polygon_offseted.exterior.xy
-    #     y, x = np.array(y), -np.array(x)
-    #     ax.plot(x, y, 'b-', label='Polygon')
-
-    #     waypoints_y = [point[0] for point in waypoints]
-    #     waypoints_x = [point[1] for point in waypoints]
-    #     ax.plot(waypoints_x, waypoints_y, 'r-', label='Trajectory')
-
-    #     for waypoint in waypoints:
-    #         self.plot_camera_footprint(ax, waypoint[1], waypoint[0])
-
-    #     ax.legend()
-    #     ax.set_xlabel('Y (meters)')
-    #     ax.set_ylabel('X (meters)')
-    #     ax.invert_xaxis()
-    #     ax.set_title('UAV Trajectory and Camera Coverage')
-    #     plt.gca().set_aspect('equal', adjustable='box')
-    #     plt.show()
-
-    def plot_camera_footprint(self, ax, x, y):
-        image_width_on_ground, image_height_on_ground = self.get_photo_size_on_ground()
-        half_width = image_width_on_ground / 2
-        half_height = image_height_on_ground / 2
-
-        footprint = Polygon([
-            (x - half_width, y - half_height),
-            (x + half_width, y - half_height),
-            (x + half_width, y + half_height),
-            (x - half_width, y + half_height)
-        ])
-
-        f_x, f_y = footprint.exterior.xy
-        ax.plot(f_x, f_y, 'g--', alpha=0.5)
