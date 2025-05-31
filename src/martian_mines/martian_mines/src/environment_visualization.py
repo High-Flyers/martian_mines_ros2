@@ -8,7 +8,7 @@ from geometry_msgs.msg import Pose, Vector3
 from std_msgs.msg import Header, ColorRGBA
 from builtin_interfaces.msg import Duration  # Import the Duration message
 
-from .utils.environment import Environemnt
+from .utils.environment import Environment
 
 
 class EnvironmentVisualization(Node):
@@ -17,7 +17,7 @@ class EnvironmentVisualization(Node):
         self.markers_pub = self.create_publisher(
             MarkerArray, "environment_visualization/markers", 10
         )
-        self.env = Environemnt(0, 0)
+        self.env = Environment(0, 0)
         self.poses = (
             self.env.left_central_ball,
             self.env.left_lower_ball,

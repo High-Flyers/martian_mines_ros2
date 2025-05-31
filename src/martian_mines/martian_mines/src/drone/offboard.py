@@ -55,7 +55,17 @@ def offboard_command(func):
     return wrapper
 
 
-class Offboard:
+class OffboardMeta(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+
+class Offboard(metaclass=OffboardMeta):
     HEARTBEAT_THRESHOLD = 10
 
     def __init__(self, node: Node) -> None:
@@ -113,14 +123,14 @@ class Offboard:
         self._vehicle_attitude = None
         self._vehicle_status = VehicleStatus()
         self._vehicle_land_detected = None
-        self._enu_local_position = None
+        self._enu_local_odometry = None
 
         self.timer = self.node.create_timer(0.1, self.timer_callback)
         self._heartbeat_counter = 0
 
     @property
     def enu_local_odom(self) -> ENULocalOdometry:
-        return self._enu_local_position
+        return self._enu_local_odometry
     
     @property
     def is_ready(self) -> bool:
@@ -152,7 +162,7 @@ class Offboard:
         enu.heading = heading_from_quaternion(enu.qx, enu.qy, enu.qz, enu.qw)
 
         self._pub_enu_local_position.publish(enu)
-        self._enu_local_position = enu
+        self._enu_local_odometry = enu
 
     def vehicle_attitude_cb(self, msg: VehicleAttitude) -> None:
         self._vehicle_attitude = msg
@@ -163,11 +173,11 @@ class Offboard:
     def vehicle_land_detected_cb(self, msg: VehicleLandDetected) -> None:
         self._vehicle_land_detected = msg
 
-    def takeoff(self, height):
-        if self._enu_local_position is None:
+    def takeoff(self, height, heading=None):
+        if self._enu_local_odometry is None:
             return
 
-        self.fly_point(self._enu_local_position.x, self._enu_local_position.y, height)
+        self.fly_point(self._enu_local_odometry.x, self._enu_local_odometry.y, height, heading)
 
     def arm(self):
         self.publish_vehicle_command(
@@ -192,22 +202,22 @@ class Offboard:
         self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=1.0, param2=6.0)
 
     def is_takeoff_finished(self, height, epsilon=0.1):
-        if self._enu_local_position is None:
+        if self._enu_local_odometry is None:
             return False
         
         return self.is_point_reached(
-            self._enu_local_position.x, self._enu_local_position.y, height, epsilon=epsilon
+            self._enu_local_odometry.x, self._enu_local_odometry.y, height, epsilon=epsilon
         )
 
     def is_point_reached(self, x, y, z, epsilon=0.1):
-        if self._enu_local_position is None:
+        if self._enu_local_odometry is None:
             return False
         
         distance = np.linalg.norm(
             [
-                x - self._enu_local_position.x,
-                y - self._enu_local_position.y,
-                z - self._enu_local_position.z,
+                x - self._enu_local_odometry.x,
+                y - self._enu_local_odometry.y,
+                z - self._enu_local_odometry.z,
             ]
         )
         return distance < epsilon
@@ -220,26 +230,30 @@ class Offboard:
 
     @offboard_command
     def fly_point(self, x, y, z, heading=None):
-        if self._enu_local_position is None:
+        if self._enu_local_odometry is None:
             return
 
         msg = TrajectorySetpoint()
         msg.position = enu_to_ned(x, y, z)
-        msg.yaw = enu_to_ned_heading(heading if heading else self._enu_local_position.heading)
+        msg.yaw = enu_to_ned_heading(heading if heading is not None else self._enu_local_odometry.heading)
         msg.timestamp =int(self.node.get_clock().now().nanoseconds / 1000)
         self._pub_trajectory_setpoint.publish(msg)
 
     @offboard_command
     def fly_velocity(self, vx, vy, vz, heading=None):
-        if self._enu_local_position is None:
+        if self._enu_local_odometry is None:
             return
         
         msg = TrajectorySetpoint()
         msg.position = [float("NaN"), float("NaN"), float("NaN")]
         msg.velocity = enu_to_ned(vx, vy, vz)
-        msg.yaw = enu_to_ned_heading(heading if heading else self._enu_local_position.heading)
+        msg.yaw = enu_to_ned_heading(heading if heading is not None else self._enu_local_odometry.heading)
         msg.timestamp = int(self.node.get_clock().now().nanoseconds / 1000)
         self._pub_trajectory_setpoint.publish(msg)
+    
+    @offboard_command
+    def hover(self):
+        self.fly_point(self.enu_local_odom.x, self.enu_local_odom.y, self.enu_local_odom.z)
 
     def timer_callback(self):
         self.publish_offboard_control_heartbeat_signal()
