@@ -79,7 +79,7 @@ class FigureFinder(Node):
         self.bridge = CvBridge()
 
         self.subscription = self.create_subscription(
-            CameraInfo, "/camera_info", self.camera_info_callback, 15
+            CameraInfo, "/color/camera_info", self.camera_info_callback, 15
         )
         self.camera_info_received = False
         self.wait_for_camera_info()

@@ -122,7 +122,8 @@ WORKDIR $ROS_WORKSPACE
 RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" 
 
 RUN echo "source \"/opt/ros/${ROS_DISTRO}/setup.bash\"" >> "/home/${USERNAME}/.bashrc" && \
-    echo "source \"${ROS_WORKSPACE}/install/setup.bash\"" >> "/home/${USERNAME}/.bashrc"
+    echo "source \"${ROS_WORKSPACE}/install/setup.bash\"" >> "/home/${USERNAME}/.bashrc" && \
+    echo "export LRS_LOG_LEVEL=ERROR" >> "/home/${USERNAME}/.bashrc"
 
 RUN sudo sed -i '$i source $ROS_WORKSPACE/install/setup.bash' /ros_entrypoint.sh
 
