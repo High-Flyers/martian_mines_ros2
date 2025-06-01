@@ -106,14 +106,10 @@ def generate_launch_description():
                 ),
                 # Real-world remaps
                 Node(
-                    condition=IfCondition(real_world),
                     package='martian_mines',
-                    executable='remap_helper.py',  # dummy placeholder if you want to do remapping
-                    name='remap_camera_topics',
-                    remappings=[
-                        ('camera/image_raw', 'color/image_raw'),
-                        ('camera/camera_info', 'color/camera_info')
-                    ],
+                    executable='camera_remap',
+                    name='camera_remap',
+                    parameters=[config_file],
                     output='screen'
                 )
 

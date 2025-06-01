@@ -43,7 +43,7 @@ class Detection(Node):
             raise ValueError(f"Unknown detector: {detector}")
         self.get_logger().info(f"Used detector: {detector}")
 
-        self.create_subscription(Image, "camera/image_raw", self.image_callback, 10)
+        self.create_subscription(Image, "color/image_raw", self.image_callback, 10)
 
     def publish_compressed_visualization(self, image_np: np.array):
         msg = CompressedImage()

@@ -13,99 +13,18 @@ from geometry_msgs.msg import PoseStamped
 from .drone.offboard import Offboard
 from martian_mines_msgs.msg import FigureMsgList, FigureMsg, BoundingBoxLabeledList
 
-
-class States(Enum):
-    IDLE = auto()
-    INIT = auto()
-    TAKEOFF = auto()
-    SCANNING = auto()
-    COLLECT_FIGURES = auto()
-    TARGET_FIGURE = auto()
-    FIGURE_LANDING = auto()
-    RETURN = auto()
+from .mission.state_machine import StateMachine, StateAction, Transitions, State
+from .mission.state_idle import StateIdle
+from .mission.state_start import StateStart
+from .mission.state_scanning import StateScanning
+from .mission.state_return import StateReturn
 
 
-LANDED_WAIT_TIME = 30
-
-
-class MissionController(Node, Machine):
+class MissionController(Node):
     def __init__(self):
-        Node.__init__(self, 'mission_controller')
-        self.__init_state_machine()
+        super().__init__("mission_controller")
 
         self.offboard = Offboard(self)
-        self.target_figures: List[FigureMsg] = None
-        self.bboxes = BoundingBoxLabeledList()
-        self.local_home_odom = PoseStamped()
-
-        self.takeoff_height = self.declare_parameter('takeoff_height', 4).value
-        self.target_figure_types = self.declare_parameter('target_figure_types', ['blueBall', 'redBall', 'purpleBall']).value
-        self.target_figure_approach_height = self.declare_parameter('target_figure_approach_height', 3).value
-
-        self.pub_precision_landing_bbox = self.create_publisher(BoundingBox2D, 'precision_landing/landing_target/bbox', 1)
-
-        self.get_logger().info('Waiting for services...')
-        self.client_generate_trajectory = self.create_client(Trigger, 'trajectory_generator/generate')
-        self.client_figure_finder_start = self.create_client(Trigger, 'figure_finder/start')
-        self.client_figure_finder_finish = self.create_client(Trigger, 'figure_finder/finish')
-        # self.client_precision_landing_start = self.create_client(Trigger, 'precision_landing/start')
-
-        for client in [
-            self.client_generate_trajectory,
-            self.client_figure_finder_start,
-            self.client_figure_finder_finish,
-            # self.client_precision_landing_start
-        ]:
-            while not client.wait_for_service(timeout_sec=15):
-                self.get_logger().warn(f'Waiting for {client.srv_name} service...')
-
-        self.get_logger().info('Services are ready!')
-
-        self.sub_confirmed_figures = self.create_subscription(FigureMsgList, 'figure_finder/confirmed_figures', self.cb_confirmed_figures, 10)
-        self.sub_trajectory_tracker_finished = self.create_subscription(Empty, 'trajectory_tracker/finished', self.cb_trajectory_tracker_finished, 10)
-        self.sub_precision_landing_finished = self.create_subscription(Empty, 'precision_landing/finished', self.cb_precision_landing_finished, 10)
-        self.sub_detection_bboxes = self.create_subscription(BoundingBoxLabeledList, 'detection/bboxes', self.cb_detection_bboxes, 10)
-
-    def __init_state_machine(self):
-        transitions = [
-            ['init', States.IDLE, States.INIT],
-            ['takeoff', [States.INIT, States.FIGURE_LANDING], States.TAKEOFF],
-            {'trigger': 'takeoff_finished', 'source': States.TAKEOFF, 'dest': States.SCANNING, 'conditions': 'is_need_scanning'},
-            ['collect_figures', States.SCANNING, States.COLLECT_FIGURES],
-            ['target_figure', States.SCANNING, States.TARGET_FIGURE],
-            ['takeoff_finished', States.TAKEOFF, States.TARGET_FIGURE],
-            ['land_figure', States.TARGET_FIGURE, States.FIGURE_LANDING],
-            ['return_home', States.TARGET_FIGURE, States.RETURN]
-        ]
-
-        Machine.__init__(self, states=States, transitions=transitions, initial=States.IDLE)
-
-    def is_need_scanning(self):
-        return self.target_figures is None
-
-    def on_enter_INIT(self):
-        self.get_logger().info('State: INIT')
-        self.offboard.set_offboard_mode()
-        self.local_home_odom = self.offboard.enu_local_odom
-        self.takeoff()
-
-    def on_enter_TAKEOFF(self):
-        self.get_logger().info('State: TAKEOFF')
-
-        def cb_timer_takeoff():
-            if not self.offboard.is_ready:
-                return
-            self.offboard.arm()
-            if not self.offboard.is_armed:
-                return
-            self.offboard.takeoff(self.takeoff_height)
-            if self.offboard.is_takeoff_finished(self.takeoff_height):
-<<<<<<< HEAD
-                self.offboard.set_hold_mode()
-                self.get_logger().info("Takeoff complete. Exiting.")
-
-=======
->>>>>>> origin/run-mission
                 self.takeoff_finished()
                 self.timer_takeoff.cancel()
 
@@ -177,21 +96,53 @@ class MissionController(Node, Machine):
 
     def cb_detection_bboxes(self, msg: BoundingBoxLabeledList):
         self.bboxes = msg
+    
+        self.state_idle = StateIdle(self)
+        self.state_start = StateStart(self.offboard)
+        self.state_scanning = StateScanning(self, self.offboard)
+        self.state_return = StateReturn(self.offboard)
+
+        transitions: Transitions = {
+            self.state_idle: {
+                StateAction.CONTINUE: self.state_idle,
+                StateAction.FINISHED: self.state_start,
+            },
+            self.state_start: {
+                StateAction.CONTINUE: self.state_start,
+                StateAction.FINISHED: self.state_scanning
+            },
+            self.state_scanning: {
+                StateAction.CONTINUE: self.state_scanning,
+                StateAction.FINISHED: self.state_return,
+                StateAction.ABORT: self.state_return,
+            },
+            self.state_return: {
+                StateAction.CONTINUE: self.state_return,
+                StateAction.FINISHED: self.state_idle
+            }
+        }
+
+        self.prev_state: State = self.state_idle
+        self.state_machine = StateMachine(transitions, self.state_idle, StateAction.CONTINUE)
+
+    def run(self):
+        while rclpy.ok():
+            self.state_machine.handle()
+            self.log_state()
+            rclpy.spin_once(self, timeout_sec=0.1)
+
+    def log_state(self):
+        current_state = self.state_machine.state
+        if current_state.name != self.prev_state.name:
+            self.get_logger().error(f'STATE: {current_state.name}')
+        self.prev_state = current_state
 
 
 def main(args=None):
-    rclpy.init(args=args)
-    node = MissionController()
-
     try:
-        node.init()
-        rclpy.spin(node)
+        rclpy.init(args=args)
+        node = MissionController()
+        node.run()
+        rclpy.shutdown()
     except KeyboardInterrupt:
         pass
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
-
-
-if __name__ == '__main__':
-    main()
