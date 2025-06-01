@@ -100,12 +100,9 @@ class MissionController(Node, Machine):
                 return
             self.offboard.takeoff(self.takeoff_height)
             if self.offboard.is_takeoff_finished(self.takeoff_height):
-<<<<<<< HEAD
                 self.offboard.set_hold_mode()
                 self.get_logger().info("Takeoff complete. Exiting.")
 
-=======
->>>>>>> origin/run-mission
                 self.takeoff_finished()
                 self.timer_takeoff.cancel()
 
