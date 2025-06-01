@@ -93,7 +93,7 @@ class FigureFinder(Node):
             FigureMsgList, "figure_finder/detected_figures", 10
         )
 
-        image_sub = Subscriber(self, Image, "camera/image_raw")
+        image_sub = Subscriber(self, Image, "color/image_raw")
         bboxes_sub = Subscriber(self, BoundingBoxLabeledList, "detection/bboxes")
         ts = ApproximateTimeSynchronizer(
             [image_sub, bboxes_sub], queue_size=10, slop=0.1

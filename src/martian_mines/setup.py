@@ -41,6 +41,8 @@ setup(
             "tf_start_pose = martian_mines.src.tf_start_pose:main",
             "data_collector = martian_mines.src.data_collector:main",
             "offboard_example = martian_mines.src.offboard_example:main",
-        ],
+            "camera_recorder = martian_mines.src.camera_recorder:main",
+            "camera_remap = martian_mines.src.camera_remap:main",
+            ],
     },
 )
