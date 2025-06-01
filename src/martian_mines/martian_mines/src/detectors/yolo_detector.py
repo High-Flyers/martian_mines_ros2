@@ -18,13 +18,13 @@ class YoloDetector(AbstractDetector):
     def __from_ultralytics(self, data, label_names) -> List[BoundingBoxLabeled]:
         boxes = []
         for i in range(data.data.shape[0]):
-            x, y, w, h = map(int, data.xywh[i].tolist())
+            x, y, w, h = map(float, data.xywh[i].tolist())
             label_id = int(data.cls[i].item())
             label = label_names.get(label_id, 'Unknown')
             confidence = data.conf[i].item()
             bbox = BoundingBox2D()
-            bbox.center.x = x
-            bbox.center.y = y
+            bbox.center.position.x = x
+            bbox.center.position.y = y
             bbox.size_x = w
             bbox.size_y = h
             bbox_labeled = BoundingBoxLabeled()

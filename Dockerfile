@@ -79,7 +79,9 @@ RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install ultralytics dill pyrr shapely transitions matplotlib opencv-contrib-python cv_bridge
+
 RUN pip3 install -U numpy==1.26.4 numpy-quaternion
+
 
 # Create a non-root user with sudo privileges
 RUN groupadd --gid ${USER_GID} ${USERNAME} \
