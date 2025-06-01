@@ -14,7 +14,7 @@ def generate_launch_description():
     real_world = LaunchConfiguration('real_world')
     config_file = LaunchConfiguration('config_file')
     no_start_pose = LaunchConfiguration('no_start_pose')
-
+    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
 
     return LaunchDescription([
         # PX4 Environment variable
@@ -33,6 +33,7 @@ def generate_launch_description():
             condition=IfCondition(real_world)
         ),
         DeclareLaunchArgument('no_start_pose', default_value='false'),
+        DeclareLaunchArgument('use_sim_time', default_value='true'),
 
         # Real-world setup
         GroupAction(
@@ -62,36 +63,22 @@ def generate_launch_description():
                     package='tf2_ros',
                     executable='static_transform_publisher',
                     name='tf_base_link_camera',
-                    arguments=['0', '0', '0', '-1.571', '0', '-1.571', 'cgo3_camera_link', 'camera_link']
+                    arguments=['0', '0', '0', '0', '-1.571', '0', 'base_link', 'camera_link'],
+                    parameters=[{'use_sim_time': use_sim_time}]
                 ),
                 Node(
                     package='tf2_ros',
                     executable='static_transform_publisher',
                     name='tf_uber_map',
-                    arguments=['30.5', '-18.5', '0', '0', '0', '0', 'map', 'uber_map']
-                )
+                    arguments=['30.5', '-18.5', '0', '0', '0', '0', 'map', 'uber_map'],
+                    parameters=[{'use_sim_time': use_sim_time}]
+                ),
             ]
         ),
 
             # UAV0 namespace group
         GroupAction(
             actions=[
-                # Figure Finder node
-                Node(
-                    package='martian_mines',
-                    executable='figure_finder',
-                    name='figure_finder',
-                    output='screen',
-                    parameters=[config_file]
-                ),
-                # Detection node
-                Node(
-                    package='martian_mines',
-                    executable='detection',
-                    name='detection',
-                    output='screen',
-                    parameters=[config_file]
-                ),
                 # tf_start_pose node
                 Node(
                     condition=UnlessCondition(no_start_pose),
@@ -99,9 +86,24 @@ def generate_launch_description():
                     executable='tf_start_pose',
                     name='tf_start_pose',
                     output='screen',
-                    parameters=[config_file]
+                    parameters=[config_file, {'use_sim_time': use_sim_time}]
                 ),
-
+                # Detection node
+                Node(
+                    package='martian_mines',
+                    executable='detection',
+                    name='detection',
+                    output='screen',
+                    parameters=[config_file, {'use_sim_time': use_sim_time}]
+                ),
+                # Figure Finder node
+                Node(
+                    package='martian_mines',
+                    executable='figure_finder',
+                    name='figure_finder',
+                    output='screen',
+                    parameters=[config_file, {'use_sim_time': use_sim_time}]
+                ),
                 # Real-world remaps
                 Node(
                     condition=IfCondition(real_world),

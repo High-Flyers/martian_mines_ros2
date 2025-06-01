@@ -4,7 +4,6 @@ from image_geometry import PinholeCameraModel
 from tf2_geometry_msgs import do_transform_vector3
 from geometry_msgs.msg import Vector3Stamped
 from martian_mines_msgs.msg import BoundingBoxLabeled
-from rclpy.time import Time
 
 class BBoxMapper:
     def __init__(self, camera_info_msg, node, base_frame="start_pose", camera_frame="camera_link"):
@@ -25,7 +24,6 @@ class BBoxMapper:
     def get_transform(self, transform_time):
         try:
             transform = self.tf_buffer.lookup_transform(self.base_frame, self.camera_frame, transform_time) # transform time to fix
-            self.node.get_logger().info(f"transform from bbox_mapper: {transform}")
             return transform
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             self.node.get_logger().warn(f"Failed to get transform: {e}")
@@ -36,18 +34,15 @@ class BBoxMapper:
         transform = self.get_transform(transform_time) # transform time to fix
         if transform:
             vector = Vector3Stamped()
-            vector.header.stamp = transform_time # transform time to fix
-            vector.header.frame_id = self.camera_frame
             vector.vector.x = ray_camera_frame[0]
             vector.vector.y = ray_camera_frame[1]
             vector.vector.z = ray_camera_frame[2]
-            transformed_ray = do_transform_vector3(vector, transform)
-
             camera_position = (
                 transform.transform.translation.x,
                 transform.transform.translation.y,
                 transform.transform.translation.z
             )
+            transformed_ray = do_transform_vector3(vector, transform)
             ray_direction = (transformed_ray.vector.x, transformed_ray.vector.y, transformed_ray.vector.z)
             ray_local_frame = pyrr.ray.create(camera_position, ray_direction)
             plane = pyrr.plane.create()

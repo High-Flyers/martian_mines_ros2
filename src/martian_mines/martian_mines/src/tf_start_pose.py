@@ -35,15 +35,15 @@ class TfStartPose(Node):
 
     def odometry_cb(self, msg):
         self.odometry = msg
-        self.send_odometry_transform("map", "base_link", "dynamic") # dynamic: map -> base_link
 
         if not self.odometry_initialized:
             self.odometry_initialized = True
             self.get_logger().info(
                 f"Odometry received"
             )
-            self.send_camera_transform() # static: base_link -> camera_link
             self.send_odometry_transform("map", "start_pose", "static") # static: map -> start_pose
+
+        self.send_odometry_transform("map", "base_link", "dynamic") # dynamic: map -> base_link
 
     def send_odometry_transform(self, parent_frame, child_frame_id, type):
         t = TransformStamped()
@@ -63,25 +63,6 @@ class TfStartPose(Node):
             self.static_broadcaster.sendTransform(t)
         else:
             self.broadcaster.sendTransform(t)
-
-    def send_camera_transform(self):
-        t = TransformStamped()
-        t.header.frame_id = "base_link"
-        t.header.stamp = self.get_clock().now().to_msg()
-        t.child_frame_id = "camera_link"
-
-        # hardcoded values
-        t.transform.translation.x = 0.0
-        t.transform.translation.y = 0.0
-        t.transform.translation.z = 0.0
-
-        t.transform.rotation.x = 0.0
-        t.transform.rotation.y = 0.707
-        t.transform.rotation.z = 0.0
-        t.transform.rotation.w =  0.707
-
-        self.static_broadcaster.sendTransform(t)
-
 
 def main(args=None):
     rclpy.init(args=args)
