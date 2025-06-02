@@ -23,6 +23,9 @@ class StateDeliver(State):
 
         if self.barrel_reached:
             data["collection_idx"] += 1
+            if not self.offboard.set_gripper(True):
+                return StateAction.CONTINUE, data
+            
             return StateAction.FINISHED, data
 
         return StateAction.CONTINUE, data

@@ -42,6 +42,8 @@ class StateCollect(State):
             self.offboard.land()
 
         if not self.offboard.is_armed:
+            if not self.offboard.set_gripper(False):
+                return StateAction.CONTINUE, data
             return StateAction.TAKEOFF, data
 
         return StateAction.CONTINUE, data

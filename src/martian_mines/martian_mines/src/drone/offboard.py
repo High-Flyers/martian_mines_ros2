@@ -4,6 +4,7 @@ from quaternion import from_euler_angles, as_euler_angles
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
+from std_srvs.srv import SetBool
 
 from px4_msgs.msg import (
     TrajectorySetpoint,
@@ -118,6 +119,10 @@ class Offboard(metaclass=OffboardMeta):
             self.vehicle_land_detected_cb,
             px4_qos,
         )
+
+        # Clients
+        self._client_gripper = self.node.create_client(
+            SetBool, "gripper")
 
         self._vehicle_local_position = None
         self._vehicle_attitude = None
@@ -254,6 +259,29 @@ class Offboard(metaclass=OffboardMeta):
     @offboard_command
     def hover(self):
         self.fly_point(self.enu_local_odom.x, self.enu_local_odom.y, self.enu_local_odom.z)
+
+    @offboard_command
+    def set_gripper(self, open: bool):
+        if not self._client_gripper.wait_for_service(timeout_sec=1.0):
+            self.node.get_logger().error("Gripper service not available")
+            return
+
+        request = SetBool.Request()
+        request.data = open
+
+        future = self._client_gripper.call_async(request)
+        rclpy.spin_until_future_complete(self.node, future)
+
+        if future.result() is None:
+            self.node.get_logger().error("Gripper service call failed")
+            return False
+        else:
+            if future.result().success:
+                self.node.get_logger().info(f"Gripper set to {'open' if open else 'closed'}")
+                return True
+            else:
+                self.node.get_logger().warn("Gripper service responded but operation was not successful")
+                return False
 
     def timer_callback(self):
         self.publish_offboard_control_heartbeat_signal()
