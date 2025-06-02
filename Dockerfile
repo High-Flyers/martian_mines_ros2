@@ -103,7 +103,7 @@ RUN apt-get update --allow-releaseinfo-change && \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install ultralytics dill pyrr shapely transitions matplotlib opencv-contrib-python cv_bridge
-RUN pip3 install -U numpy==1.26.4 numpy-quaternion
+RUN pip3 install -U numpy==1.26.4 numpy-quaternion Jetson.GPIO
 
 # Create a non-root user with sudo privileges
 RUN groupadd --gid ${USER_GID} ${USERNAME} \
