@@ -57,7 +57,7 @@ class GripperController(Node):
         if request.data:
             self.commandOpen()
             start = time.time()
-            while not self.didOpen() and time.time() - start < 5.0:
+            while not self.didOpen() and time.time() - start < 60.0:
                 time.sleep(0.05)
             if self.didOpen():
                 response.success = True
@@ -68,7 +68,7 @@ class GripperController(Node):
         else:
             self.commandClose()
             start = time.time()
-            while not self.didClose() and time.time() - start < 5.0:
+            while not self.didClose() and time.time() - start < 60.0:
                 time.sleep(0.05)
             if self.didClose():
                 response.success = True
