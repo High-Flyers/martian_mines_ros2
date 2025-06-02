@@ -29,11 +29,8 @@ from rclpy.node import Node
 from sensor_msgs.msg import CameraInfo
 
 def wait_for_message(node, topic, msg_type, timeout=None):
-    """ Custom implementation of rospy.wait_for_message in ROS2 """
     node.get_logger().info("Waiting for message on topic: " + topic)
-
     future = rclpy.Future() 
-
 
     def callback(msg):
         if not future.done():
