@@ -28,8 +28,15 @@ except ModuleNotFoundError:
 class GripperController(Node):
     def __init__(self):
         super().__init__('gripper_controller')
-        self.cmdPin = 11
-        self.ackPin = 15
+        self.get_logger().info("Gripper Controller node started!")
+
+        self.declare_parameter('cmd_pin', 11)
+        self.declare_parameter('ack_pin', 15)
+
+        self.cmdPin = self.get_parameter('cmd_pin').get_parameter_value().integer_value
+        self.ackPin = self.get_parameter('ack_pin').get_parameter_value().integer_value
+        self.get_logger().info(f"cmdPin: {self.cmdPin}")
+        self.get_logger().info(f"ackPin: {self.ackPin}")
 
         GPIO.setmode(GPIO.BOARD)
         GPIO.setup(self.cmdPin, GPIO.OUT)
