@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.duration import Duration
 from geometry_msgs.msg import PointStamped, Pose, Point
-
+from mavros_msgs.msg import LandingTarget
 from sensor_msgs.msg import CameraInfo
 from vision_msgs.msg import BoundingBox2D
 from std_msgs.msg import Empty
@@ -41,19 +41,19 @@ def wait_for_message(node, topic, msg_type, timeout=None):
 
     sub = node.create_subscription(msg_type, topic, callback, 10)
 
+    # Wait until message is received or timeout occurs
     rclpy.spin_until_future_complete(node, future, timeout_sec=timeout)
-    node.destroy_subscription(sub)  
+    node.destroy_subscription(sub)  # Cleanup subscription
 
     node.get_logger().info("Message received on topic: " + topic)
 
-    return future.result() if future.done() else None  
+    return future.result() if future.done() else None  # Return message if received
 
 
 class PrecisionLanding(Node):
     def __init__(self) -> None:
         super().__init__('precision_landing_node')
 
-        self.pub_landing_target_pose = self.create_publisher(PoseStamped, "landing_target/pose", 10)
         self.camera_link = self.declare_parameter('camera_link', 'camera_link').value
         self.offboard = Offboard(self)
         self.tf_buffer = Buffer()
@@ -63,12 +63,15 @@ class PrecisionLanding(Node):
         self.camera_info = wait_for_message(self, '/color/camera_info', CameraInfo)
 
 
+        
         self.timer_check_landing_status = None
 
         self.__init_precision_landing_params()
         self.wait_for_transform()
 
+        # Subscriptions and Publishers
         self.sub_target_object_point = self.create_subscription(BoundingBox2D, "precision_landing/landing_target/bbox", self.__callback_landing_target_bbox, 10)
+        self.pub_landing_target = self.create_publisher(LandingTarget, "mavros/landing_target/raw", 10)
         self.pub_estimated_target_object_point = self.create_publisher(PointStamped, "precision_landing/landing_target/estimated/pose", 1)
         self.pub_landing_finished = self.create_publisher(Empty, "precision_landing/finished", 1)
         self.service_start = self.create_service(Trigger, "precision_landing/start", self.__callback_service_start)
@@ -91,20 +94,38 @@ class PrecisionLanding(Node):
         max_search_attempts = self.declare_parameter('max_search_attempts', 3).value
         search_timeout = self.declare_parameter('search_timeout', 10.0).value
 
+
+        # self.offboard.set_param('PLD_BTOUT', landing_target_timeout)
+        # self.offboard.set_param('PLD_SRCH_ALT', search_altitude)
+        # self.offboard.set_param('PLD_FAPPR_ALT', final_approach_altitude)
+        # self.offboard.set_param('PLD_HACC_RAD', horizontal_acceptance_radius)
+        # self.offboard.set_param('PLD_MAX_SRCH', max_search_attempts)
+        # self.offboard.set_param('PLD_SRCH_TOUT', search_timeout)
+
+    def __init_landing_target(self) -> LandingTarget:
+        landing_target = LandingTarget()
+        landing_target.header.stamp = rclpy.time.Time().to_msg()
+        landing_target.header.frame_id = 'map'
+        landing_target.frame = 1  # MAV_FRAME_LOCAL_NED
+        landing_target.type = LandingTarget.VISION_OTHER
+
+        return landing_target
+
     def __callback_landing_target_bbox(self, bbox: BoundingBox2D):
+        self.landing_target.header.stamp = rclpy.time.Time().to_msg()
 
-        target_pose = self.bbox_to_target_pose(bbox)
+        self.landing_target.pose = self.bbox_to_target_pose(bbox)
+        self.landing_target.size = [bbox.size_x, bbox.size_y]
 
-        self.pub_estimated_target_object_point.publish(point_to_point_stamped(target_pose.pose.position))
-        self.pub_landing_target_pose.publish(target_pose)
+        self.pub_estimated_target_object_point.publish(point_to_point_stamped(self.landing_target.pose.position))
 
+        self.pub_landing_target.publish(self.landing_target)
 
     def __callback_service_start(self, req):
-
-        self.offboard.land_on_target()  
-
+        response = self.offboard.set_precision_landing_mode()
         self.timer_check_landing_status = self.create_timer(0.1, self.__callback_check_landing_status)
-        return Trigger.Response(success=True, message="Started LAND and precision pose publishing")
+
+        return Trigger.Response(success=response.mode_sent, message="")
 
     def __callback_check_landing_status(self):
         if self.offboard.is_landed():
