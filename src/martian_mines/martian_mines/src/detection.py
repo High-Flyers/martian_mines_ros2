@@ -26,7 +26,7 @@ class Detection(Node):
         self.pub_visualization = self.create_publisher(
             CompressedImage, "detection/image/compressed", 2
         )
-        self.declare_parameter("detector", "aruco")
+        self.declare_parameter("detector", "yolo")
         self.declare_parameter("nn_model_path", "nn_models/best_barrel_unity.pt")
 
         detector = self.get_parameter("detector").get_parameter_value().string_value
