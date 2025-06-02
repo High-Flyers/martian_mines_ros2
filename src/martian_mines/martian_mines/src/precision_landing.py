@@ -59,8 +59,8 @@ class PrecisionLanding(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.camera_model = PinholeCameraModel()
-        self.camera_info = wait_for_message(self, 'camera/camera_info', CameraInfo)
-
+        self.landing_target = self.__init_landing_target()
+        self.camera_info = wait_for_message(self, '/color/camera_info', CameraInfo)
 
         self.timer_check_landing_status = None
 
