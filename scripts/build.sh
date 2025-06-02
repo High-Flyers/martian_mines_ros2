@@ -18,3 +18,4 @@ colcon build ${SYMLINK_FLAG} \
         realsense2_camera_msgs \
         realsense2_camera \
         realsense2_description
+
