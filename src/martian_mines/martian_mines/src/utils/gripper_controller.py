@@ -1,7 +1,29 @@
 import rclpy
 from rclpy.node import Node
 from std_srvs.srv import SetBool
-import Jetson.GPIO as GPIO
+try:
+    import Jetson.GPIO as GPIO
+except ModuleNotFoundError:
+    print("[INFO] Using GPIO mock - Jetson.GPIO not found")
+    class GPIO:
+        BOARD = OUT = IN = HIGH = LOW = None
+
+        @staticmethod
+        def setmode(mode): pass
+
+        @staticmethod
+        def setup(pin, mode): pass
+
+        @staticmethod
+        def output(pin, state): print(f"[GPIO MOCK] Set pin {pin} to {state}")
+
+        @staticmethod
+        def input(pin): 
+            print("[GPIO MOCK] Reading pin state")
+            return 0  # Always LOW (simulates open gripper)
+
+        @staticmethod
+        def cleanup(): print("[GPIO MOCK] Cleanup")
 
 class GripperController(Node):
     def __init__(self):
@@ -23,23 +45,31 @@ class GripperController(Node):
 
     def moveGripper(self, request, response):
         self.get_logger().info(f"Gripper command received: {'Open' if request.data else 'Close'}")
+        import time
+
         if request.data:
             self.commandOpen()
-            if self.wait_until(self.didOpen):
+            start = time.time()
+            while not self.didOpen() and time.time() - start < 5.0:
+                time.sleep(0.05)
+            if self.didOpen():
                 response.success = True
-                response.message = "Gripper opened successfully"
+                response.message = "Gripper opened"
             else:
                 response.success = False
-                response.message = "Failed to open gripper within timeout"
+                response.message = "Gripper did not open in time"
         else:
             self.commandClose()
-            if self.wait_until(self.didClose):
+            start = time.time()
+            while not self.didClose() and time.time() - start < 5.0:
+                time.sleep(0.05)
+            if self.didClose():
                 response.success = True
-                response.message = "Gripper closed successfully"
+                response.message = "Gripper closed"
             else:
                 response.success = False
-                response.message = "Failed to close gripper within timeout"
-        self.get_logger().info(f"Returning response: {response.message}")
+                response.message = "Gripper did not close in time"
+
         return response
 
     def commandOpen(self):
@@ -57,3 +87,17 @@ class GripperController(Node):
 
     def cleanup(self):
         GPIO.cleanup()
+
+def main(args=None):
+    rclpy.init(args=args)
+    gripper_controller = GripperController()
+    try:
+        rclpy.spin(gripper_controller)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        gripper_controller.cleanup()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
