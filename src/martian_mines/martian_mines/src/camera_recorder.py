@@ -8,16 +8,19 @@ from datetime import datetime
 class CameraRecorder(Node):
     def __init__(self):
         super().__init__('camera_recorder')
+        self.declare_parameter('image_topic', '/color/image_raw')
+        image_topic = self.get_parameter('image_topic').get_parameter_value().string_value
+
         self.subscription = self.create_subscription(
             Image,
-            '/color/image_raw',  # Adjust if needed
+            image_topic,
             self.listener_callback,
             10)
         self.bridge = CvBridge()
         self.out = None
         self.fourcc = cv2.VideoWriter_fourcc(*'XVID')
         self.frame_rate = 30  # or match your camera's FPS
-        self.get_logger().info('Camera Recorder Node Started')
+        self.get_logger().info(f'Camera Recorder Node Started. Subscribing to: {image_topic}')
 
     def listener_callback(self, msg):
         try:

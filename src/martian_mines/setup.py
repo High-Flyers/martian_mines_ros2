@@ -42,6 +42,7 @@ setup(
             "data_collector = martian_mines.src.data_collector:main",
             "camera_recorder = martian_mines.src.camera_recorder:main",
             "camera_remap = martian_mines.src.camera_remap:main",
+            "gripper_controller = martian_mines.src.utils.gripper_controller:main",
             ],
     },
 )
