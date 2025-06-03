@@ -17,7 +17,6 @@ RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o 
 # Configure the ROS repository
 RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros2-latest-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2.list
 
->>>>>>> remotes/origin/main
 FROM ros:humble-ros-base AS build-librealsense
 
 ARG LIBRS_VERSION=2.55.1
@@ -103,7 +102,16 @@ RUN apt-get update --allow-releaseinfo-change && \
     ros-humble-rviz2 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install ultralytics dill pyrr shapely transitions matplotlib opencv-contrib-python cv_bridge
+RUN pip3 install \
+    ultralytics \
+    dill \
+    pyrr \ 
+    shapely \
+    transitions \
+    matplotlib \
+    opencv-contrib-python \
+    cv_bridge \
+    pytest
 
 RUN pip3 install -U numpy==1.26.4 numpy-quaternion Jetson.GPIO
 

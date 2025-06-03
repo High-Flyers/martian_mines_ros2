@@ -38,7 +38,7 @@ def test_figure_communication(rclpy_init):
     # Create a text message
     figure_msg = FigureMsg()
     figure_msg.type = "yellowBall"
-    figure_msg.id = "test_id_001"
+    figure_msg.id = 1
     figure_msg.status = "on_ground"
     figure_msg.local_x = 1.0
     figure_msg.local_y = 2.0
@@ -58,6 +58,6 @@ def test_figure_communication(rclpy_init):
 
     assert len(node.received_figures) > 0, "Nie odebrano wiadomości FigureMsgList"
     received = node.received_figures[0].figures[0]
-    assert received.id == "test_id_001"
+    assert received.id == 1
     assert received.status == "on_ground"
     assert received.type == "yellowBall"

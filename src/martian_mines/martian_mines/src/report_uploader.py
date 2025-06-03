@@ -5,8 +5,8 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPo
 from px4_msgs.msg import VehicleGlobalPosition, VehicleLocalPosition
 
 from martian_mines_msgs.msg import FigureMsgList, FigureMsg
-from .coords_scaler import CoordinateScaler
-from .uploader import Uploader
+from .utils.coords_scaler import CoordinateScaler
+from .utils.uploader import Uploader
 from martian_mines.src.drone.offboard import ned_to_enu_heading
 
 class UploadNode(Node):
