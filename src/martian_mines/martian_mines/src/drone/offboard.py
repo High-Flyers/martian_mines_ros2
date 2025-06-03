@@ -135,7 +135,7 @@ class Offboard:
         return self._vehicle_status.arming_state == VehicleStatus.ARMING_STATE_ARMED
     
     @property
-    def is_in_offboard(self):
+    def is_in_offboard(self) -> bool:
         return self._vehicle_status.nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD
 
     def vehicle_local_position_cb(self, msg: VehicleLocalPosition) -> None:

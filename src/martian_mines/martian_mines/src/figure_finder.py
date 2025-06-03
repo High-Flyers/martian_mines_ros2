@@ -234,7 +234,7 @@ class FigureFinder(Node):
                 f.bbox, transform_time
             )
             if figure_ground_position is not None:
-                f.local_frame_coords = figure_ground_position
+                f.local_frame_coords = (figure_ground_position[1], -figure_ground_position[0], figure_ground_position[2])
                 mapped_figures.append(f)
 
         return mapped_figures
