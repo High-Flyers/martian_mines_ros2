@@ -1,5 +1,4 @@
 import numpy as np
-
 from quaternion import from_euler_angles, as_euler_angles
 from geometry_msgs.msg import PoseStamped
 import rclpy
@@ -36,13 +35,11 @@ def enu_to_ned_heading(heading):
 
 
 def frd_to_flu_quaternion(x, y, z, w):
-
     q_enu = np.quaternion(float(w), float(x), float(-y), float(-z))
     q_90 = from_euler_angles((0, 0, np.pi / 2))
 
     result = q_90 * q_enu
     return (result.x, result.y, result.z, result.w)
-
 
 def heading_from_quaternion(x, y, z, w):
     q = np.quaternion(float(w), float(x), float(y), float(z))
@@ -81,15 +78,7 @@ class Offboard(metaclass=OffboardMeta):
 
         self.node = node
 
-        self._landing_target_pose = None 
-
-        self._sub_landing_target_pose = self.node.create_subscription( 
-            PoseStamped,
-            "landing_target/pose",
-            self.landing_target_pose_cb,
-            10
-        )
-
+        # Publishers
         self._pub_trajectory_setpoint = self.node.create_publisher(
             TrajectorySetpoint, "fmu/in/trajectory_setpoint", px4_qos
         )
@@ -104,7 +93,7 @@ class Offboard(metaclass=OffboardMeta):
             ENULocalOdometry, "enu_local_odometry", px4_qos
         )
 
-
+        # Subscribers
         self._sub_vehicle_local_position = self.node.create_subscription(
             VehicleLocalPosition,
             "fmu/out/vehicle_local_position",
@@ -203,28 +192,6 @@ class Offboard(metaclass=OffboardMeta):
     def land(self):
         self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
 
-    def landing_target_pose_cb(self, msg: PoseStamped):
-        self._landing_target_pose = msg
-
-    def land_on_target(self):
-
-        if not self._landing_target_pose:
-            self.node.get_logger().warn("Lack of landing target data!")
-            return
-
-        pose = self._landing_target_pose.pose
-        x, y, z = enu_to_ned(pose.position.x, pose.position.y, pose.position.z)
-
-
-        self.publish_vehicle_command(
-            VehicleCommand.VEHICLE_CMD_NAV_LAND,
-            param5=x,  # lokalne X (NED)
-            param6=y,  # lokalne Y
-            param7=z   # lokalne Z
-        )
-
-        self.node.get_logger().info("Landing command sent based on target position")
-
     def return_home(self):
         self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_RETURN_TO_LAUNCH)
 
@@ -321,15 +288,3 @@ class Offboard(metaclass=OffboardMeta):
         msg.from_external = True
         msg.timestamp = int(self.node.get_clock().now().nanoseconds / 1000)
         self._pub_vehicle_command.publish(msg)
-
-        self.node.get_logger().info(
-        f"Sent VehicleCommand: {command}, params: {[msg.param1, msg.param2, msg.param3, msg.param4, msg.param5, msg.param6, msg.param7]}"
-    )
- 
-    @property
-    def rel_alt(self):
-        if not self._vehicle_local_position:
-            self.node.get_logger().warn("Lack of local pose - rel_alt unknown")
-            return 0.0
-        return -self._vehicle_local_position.z  # Z in NED: negative above ground
-

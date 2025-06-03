@@ -28,8 +28,7 @@ def generate_launch_description():
         #     package="martian_mines", executable="precision_landing", output="screen"
         # ),
         launch_ros.actions.Node(
-            package="martian_mines", executable="trajectory_generator", output="screen", 
-
+            package="martian_mines", executable="trajectory_generator", output="screen", parameters=[{'use_sim_time': True}]
         ),
         launch_ros.actions.Node(
             package="martian_mines", executable="gripper_controller", output="screen", parameters=[{
@@ -42,7 +41,7 @@ def generate_launch_description():
         #     package="martian_mines", executable="report_uploader", output="screen"
         # ),
         launch_ros.actions.Node(
-            package="martian_mines", executable="mission_controller", output="screen"
+            package="martian_mines", executable="mission_controller", output="screen", parameters=[{'use_sim_time': True}]
         ),
     ])
 
