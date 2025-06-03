@@ -38,11 +38,9 @@ class StateScanning(State):
 
         self.client_generate_trajectory = self.node.create_client(Trigger, 'trajectory_generator/generate')
         self.client_figure_finder_start = self.node.create_client(Trigger, 'figure_finder/start')
-        self.client_figure_finder_finish = self.node.create_client(Trigger, 'figure_finder/finish')
 
         self.future_generate_trajectory = None
         self.future_figure_finder_start = None
-        self.future_figure_finder_finish = None
 
         self.scan_active = False
         self.trajectory_finished = False
@@ -62,7 +60,7 @@ class StateScanning(State):
                 self.future_figure_finder_start = None
                 self.scan_active = True
 
-        if self.trajectory is not None and not self.trajectory_finished:
+        if self.scan_active and self.trajectory is not None and not self.trajectory_finished:
             if not self.trajectory_set:
                 self.pure_pursuit.set_trajectory(self.trajectory)
                 self.trajectory_set = True
@@ -84,17 +82,12 @@ class StateScanning(State):
                 self.trajectory_finished = True
 
         if self.trajectory_finished:
-            if self.future_figure_finder_finish is None:
-                self.future_figure_finder_finish = self.client_figure_finder_start.call_async(Trigger.Request())
-
-            if self.future_figure_finder_finish.done():
-                self.trajectory_finished = False
-                self.trajectory = None
-                self.future_figure_finder_finish = None
-                self.scan_active = False
-                self.heading = None
-                return StateAction.FINISHED, data
-        
+            self.trajectory_finished = False
+            self.trajectory = None
+            self.scan_active = False
+            self.heading = None
+            return StateAction.FINISHED, data
+    
         return StateAction.CONTINUE, data
 
     def trajectory_cb(self, msg: Path) -> None:

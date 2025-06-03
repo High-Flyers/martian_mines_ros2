@@ -242,7 +242,7 @@ class FigureFinder(Node):
     def detection_callback(self, image, bboxes_msg):
         if not self.processing:
             return
-        self.get_logger().info("Figure finder processing...", throttle_duration_sec=10)
+        # self.get_logger().info("Figure finder processing...", throttle_duration_sec=10)
         try:
             frame = self.bridge.imgmsg_to_cv2(image, "bgr8")
             figures = self.create_figures(

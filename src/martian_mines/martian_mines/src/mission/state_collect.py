@@ -1,5 +1,7 @@
 from rclpy.node import Node
 
+from std_srvs.srv import Trigger
+
 from martian_mines_msgs.msg import FigureMsgList
 
 from ..drone.offboard import Offboard
@@ -11,14 +13,26 @@ class StateCollect(State):
         self.offboard = offboard
         self.node = node
 
+        self.client_figure_finder_finish = self.node.create_client(Trigger, 'figure_finder/finish')
         self.confirmed_figures_sub = self.node.create_subscription(FigureMsgList, "figure_finder/confirmed_figures", self.confirmed_figures_cb, 10)
 
+        self.future_figure_finder_finish = None
+
+        self.collection_order = ["blueBall", "redBall", "yellowBall"]
         self.confirmed_figures = None
-        self.collection_order = ["blue", "red", "yellow"]
 
     def handle(self, data):
         if self.confirmed_figures is None:
+            if self.future_figure_finder_finish is None:
+                self.future_figure_finder_finish = self.client_figure_finder_finish.call_async(Trigger.Request())
+
+            if not self.future_figure_finder_finish.done():
+                self.node.get_logger().error("figure finder finished")
+
             return StateAction.CONTINUE, data
+            
+        self.future_figure_finder_finish = None
+        data["confirmed_figures"] = self.confirmed_figures
         
         if not "collection_idx" in data:
             data["collection_idx"] = 0
@@ -33,7 +47,8 @@ class StateCollect(State):
         figure = [fig for fig in self.confirmed_figures if fig.type == color]
         
         if len(figure) < 1:
-            return StateAction.ABORT
+            data["collection_idx"] += 1
+            return StateAction.CONTINUE, data
         else:
             figure = figure[0]
 
@@ -42,8 +57,8 @@ class StateCollect(State):
             self.offboard.land()
 
         if not self.offboard.is_armed:
-            if not self.offboard.set_gripper(False):
-                return StateAction.CONTINUE, data
+            # if not self.offboard.set_gripper(False):
+                # return StateAction.CONTINUE, data
             return StateAction.TAKEOFF, data
 
         return StateAction.CONTINUE, data

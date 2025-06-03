@@ -89,6 +89,7 @@ class TrajectoryGenerator(Node):
             environment.left_upper_ball,
             environment.right_upper_ball,
             environment.right_lower_ball,
+            environment.barrel
         ]
         trajectory = ScanTrajectory(
             polygon_coords, 630, 630

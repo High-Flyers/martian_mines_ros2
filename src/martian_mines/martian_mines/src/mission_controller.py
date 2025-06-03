@@ -32,7 +32,7 @@ class MissionController(Node):
         self.state_start = StateStart(self.offboard)
         self.state_scanning = StateScanning(self, self.offboard)
         self.state_collect = StateCollect(self, self.offboard)
-        self.state_deliver = StateDeliver(self.offboard)
+        self.state_deliver = StateDeliver(self, self.offboard)
         self.state_return = StateReturn(self.offboard)
 
         transitions: Transitions = {
@@ -54,6 +54,7 @@ class MissionController(Node):
                 StateAction.CONTINUE: self.state_collect,
                 StateAction.TAKEOFF: self.state_start,
                 StateAction.FINISHED: self.state_return,
+                StateAction.ABORT: self.state_return,
             },
             self.state_deliver: {
                 StateAction.CONTINUE: self.state_deliver,
