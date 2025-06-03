@@ -234,7 +234,7 @@ class FigureFinder(Node):
                 f.bbox, transform_time
             )
             if figure_ground_position is not None:
-                f.local_frame_coords = figure_ground_position
+                f.local_frame_coords = (figure_ground_position[1], -figure_ground_position[0], figure_ground_position[2])
                 mapped_figures.append(f)
 
         return mapped_figures
@@ -242,7 +242,7 @@ class FigureFinder(Node):
     def detection_callback(self, image, bboxes_msg):
         if not self.processing:
             return
-        self.get_logger().info("Figure finder processing...", throttle_duration_sec=10)
+        # self.get_logger().info("Figure finder processing...", throttle_duration_sec=10)
         try:
             frame = self.bridge.imgmsg_to_cv2(image, "bgr8")
             figures = self.create_figures(

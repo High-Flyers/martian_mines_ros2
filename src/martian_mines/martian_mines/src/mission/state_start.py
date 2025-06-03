@@ -25,6 +25,12 @@ class StateStart(State):
             self.offboard.takeoff(5.0, data["home_odometry"].heading)
 
         if self.offboard.is_takeoff_finished(5.0):
+            self.offboard_sent = False
+            self.arm_sent = False
+            
+            if "collecting" in data and data["collecting"]:
+                return StateAction.TAKEOFF, data
+
             return StateAction.FINISHED, data
         
         return StateAction.CONTINUE, data

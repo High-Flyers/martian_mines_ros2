@@ -4,6 +4,7 @@ from quaternion import from_euler_angles, as_euler_angles
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
+from std_srvs.srv import SetBool
 
 from px4_msgs.msg import (
     TrajectorySetpoint,
@@ -54,18 +55,7 @@ def offboard_command(func):
 
     return wrapper
 
-
-class OffboardMeta(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[cls] = instance
-        return cls._instances[cls]
-
-
-class Offboard(metaclass=OffboardMeta):
+class Offboard:
     HEARTBEAT_THRESHOLD = 10
 
     def __init__(self, node: Node) -> None:
@@ -119,6 +109,10 @@ class Offboard(metaclass=OffboardMeta):
             px4_qos,
         )
 
+        # Clients
+        self._client_gripper = self.node.create_client(
+            SetBool, "gripper")
+
         self._vehicle_local_position = None
         self._vehicle_attitude = None
         self._vehicle_status = VehicleStatus()
@@ -141,7 +135,7 @@ class Offboard(metaclass=OffboardMeta):
         return self._vehicle_status.arming_state == VehicleStatus.ARMING_STATE_ARMED
     
     @property
-    def is_in_offboard(self):
+    def is_in_offboard(self) -> bool:
         return self._vehicle_status.nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD
 
     def vehicle_local_position_cb(self, msg: VehicleLocalPosition) -> None:
@@ -159,7 +153,7 @@ class Offboard(metaclass=OffboardMeta):
             self._vehicle_attitude.q[3],
             self._vehicle_attitude.q[0],
         )
-        enu.heading = heading_from_quaternion(enu.qx, enu.qy, enu.qz, enu.qw)
+        enu.heading = -msg.heading + (np.pi / 2.0) 
 
         self._pub_enu_local_position.publish(enu)
         self._enu_local_odometry = enu
@@ -254,6 +248,29 @@ class Offboard(metaclass=OffboardMeta):
     @offboard_command
     def hover(self):
         self.fly_point(self.enu_local_odom.x, self.enu_local_odom.y, self.enu_local_odom.z)
+
+    @offboard_command
+    def set_gripper(self, open: bool):
+        if not self._client_gripper.wait_for_service(timeout_sec=1.0):
+            self.node.get_logger().error("Gripper service not available")
+            return
+
+        request = SetBool.Request()
+        request.data = open
+
+        future = self._client_gripper.call_async(request)
+        rclpy.spin_until_future_complete(self.node, future)
+
+        if future.result() is None:
+            self.node.get_logger().error("Gripper service call failed")
+            return False
+        else:
+            if future.result().success:
+                self.node.get_logger().info(f"Gripper set to {'open' if open else 'closed'}")
+                return True
+            else:
+                self.node.get_logger().warn("Gripper service responded but operation was not successful")
+                return False
 
     def timer_callback(self):
         self.publish_offboard_control_heartbeat_signal()

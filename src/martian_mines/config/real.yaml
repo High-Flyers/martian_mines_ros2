@@ -4,8 +4,9 @@ figure_finder:
   ros__parameters:
     figure_collector:
       group_num_instances: 7
-      group_dist_thresh: 1.5
+      group_dist_thresh: 2.0
       use_local_coords: true
+      area_strategy: mean
     figure_operations_config_file: config/figure_operations.yaml  
     color_detection_config_file: config/color_detection.json 
 

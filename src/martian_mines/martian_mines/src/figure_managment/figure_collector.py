@@ -51,6 +51,10 @@ class FigureGroup:
     def get_mean_area(self):
         area_list = [f.area for f in self.figure_list]
         return np.mean(area_list)
+    
+    def get_median_area(self):
+        area_list = [f.area for f in self.figure_list]
+        return np.median(area_list)
 
 
 def find_proper_figure_in_distance(fig_to_find: Figure, detected_figures: List[Figure], min_distance):
@@ -73,6 +77,7 @@ class FigureCollector:
         self.num_thresh = config["group_num_instances"]
         self.dist_thresh = config["group_dist_thresh"]
         self.use_local_coords = config["use_local_coords"]
+        self.area_strategy = config["area_strategy"]
         self.fig_groups: List[FigureGroup] = []
 
     def append_new_fig_group(self, new_figure):
@@ -86,15 +91,18 @@ class FigureCollector:
                 continue
 
             closest_group = None
-            min_distance = self.dist_thresh
+            # min_distance = self.dist_thresh
             for fig_group in self.fig_groups:
-                if self.use_local_coords:
-                    dist = math.sqrt(pow(fig_group.mean_coords[0] - new_fig.local_frame_coords[0], 2) + pow(fig_group.mean_coords[1] - new_fig.local_frame_coords[1], 2))
-                else:
-                    dist = get_coords_distance(fig_group.mean_coords, new_fig.coords)
-                if dist < min_distance:  # TODO consider adding to many groups when dist < thresh
+                if fig_group.get_most_common_determined_type() == new_fig.determined_type:
                     closest_group = fig_group
-                    min_distance = dist
+
+                # if self.use_local_coords:
+                #     dist = math.sqrt(pow(fig_group.mean_coords[0] - new_fig.local_frame_coords[0], 2) + pow(fig_group.mean_coords[1] - new_fig.local_frame_coords[1], 2))
+                # else:
+                #     dist = get_coords_distance(fig_group.mean_coords, new_fig.coords)
+                # if dist < min_distance:  # TODO consider adding to many groups when dist < thresh
+                #     closest_group = fig_group
+                #     min_distance = dist
 
             if closest_group is None:
                 self.append_new_fig_group(new_fig)
@@ -112,7 +120,7 @@ class FigureCollector:
                 fig_image = fig_group.get_best_image(self.num_thresh)
                 fig_determined_type = fig_group.get_most_common_determined_type()
                 fig_color = fig_group.get_most_common_color()
-                fig_area = fig_group.get_mean_area()
+                fig_area = fig_group.get_mean_area() if self.area_strategy == "mean" else fig_group.get_median_area()
                 confirmed_fig = Figure(bbox=BoundingBox(), color=fig_color, determined_type=fig_determined_type, local_frame_coords=fig_group.mean_coords, area=fig_area, figure_img=fig_image, group_id=group_id)
                 confirmed_figures.append(confirmed_fig)
 
