@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 import time
+import matplotlib
 
 from sensor_msgs.msg import CameraInfo
 from image_geometry import PinholeCameraModel
@@ -40,6 +41,7 @@ class TrajectoryGenerator(Node):
         self.declare_parameter("altitude", 4.0)
         self.declare_parameter("overlap", 0.5)
         self.declare_parameter("offset", 1.0)
+        self.declare_parameter("plot", False)
 
         self.scan_trajectory = self.create_scan_trajectory()
 
@@ -59,6 +61,14 @@ class TrajectoryGenerator(Node):
 
         self.waypoints = self.scan_trajectory.generate_optimized_trajectory()
         self.get_logger().error("waypoints: " + str(self.waypoints.size))
+
+        plot = self.get_parameter("plot").get_parameter_value().bool_value
+
+        if plot:
+            matplotlib.use('TkAgg')
+            self.plot()
+            exit(0)
+
 
     def wait_for_transform(self):
         future = self.tf_buffer.wait_for_transform_async(
@@ -87,12 +97,16 @@ class TrajectoryGenerator(Node):
         polygon_coords = [
             environment.left_lower_ball,
             environment.left_upper_ball,
+            environment.barrel,
             environment.right_upper_ball,
             environment.right_lower_ball,
-            environment.barrel
         ]
+
+        for coord in polygon_coords:
+            self.get_logger().info(f"Coordinate: {coord}")
+        
         trajectory = ScanTrajectory(
-            polygon_coords, 630, 630
+            polygon_coords, self.camera_model.fx(), self.camera_model.fy()
         )
         trajectory.set_altitude(altitude)
         trajectory.set_overlap(overlap)
@@ -127,11 +141,15 @@ class TrajectoryGenerator(Node):
             response.message = ""
 
         return response
+    
+    def plot(self):
+        waypoints = self.scan_trajectory.generate_optimized_trajectory()
+        self.scan_trajectory.plot(waypoints)
 
 def main(args=None):
     rclpy.init(args=args)
     trajectory_generator = TrajectoryGenerator()
-
+    
     try:
         rclpy.spin(trajectory_generator)
     except KeyboardInterrupt:
