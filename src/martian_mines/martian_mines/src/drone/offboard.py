@@ -55,18 +55,7 @@ def offboard_command(func):
 
     return wrapper
 
-
-class OffboardMeta(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[cls] = instance
-        return cls._instances[cls]
-
-
-class Offboard(metaclass=OffboardMeta):
+class Offboard:
     HEARTBEAT_THRESHOLD = 10
 
     def __init__(self, node: Node) -> None:
@@ -164,7 +153,7 @@ class Offboard(metaclass=OffboardMeta):
             self._vehicle_attitude.q[3],
             self._vehicle_attitude.q[0],
         )
-        enu.heading = heading_from_quaternion(enu.qx, enu.qy, enu.qz, enu.qw)
+        enu.heading = -msg.heading + (np.pi / 2.0) 
 
         self._pub_enu_local_position.publish(enu)
         self._enu_local_odometry = enu
