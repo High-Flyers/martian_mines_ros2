@@ -91,6 +91,7 @@ RUN apt-get update --allow-releaseinfo-change && \
     udev \
     ros-dev-tools \
     python3-pip \
+    python3-tk \
     ros-humble-geographic-msgs \
     ros-humble-vision-msgs \
     ros-humble-std-msgs \
