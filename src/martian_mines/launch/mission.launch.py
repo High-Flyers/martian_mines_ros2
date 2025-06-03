@@ -36,9 +36,9 @@ def generate_launch_description():
         "ack_pin": 6
     }]
         ),
-        # launch_ros.actions.Node(
-        #     package="martian_mines", executable="report_uploader", output="screen"
-        # ),
+        launch_ros.actions.Node(
+            package="martian_mines", executable="report_uploader", output="screen"
+        ),
         launch_ros.actions.Node(
             package="martian_mines", executable="mission_controller", output="screen", parameters=[{'use_sim_time': True}]
         ),
