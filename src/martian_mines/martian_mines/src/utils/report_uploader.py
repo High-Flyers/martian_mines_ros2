@@ -13,8 +13,8 @@ class UploadNode(Node):
     def __init__(self):
         super().__init__("report_uploader_py")
 
-        self.drone_uploader = Uploader("http://91.227.41.24:3001/drones")
-        self.figure_uploader = Uploader("http://91.227.41.24:3001/samples")
+        self.drone_uploader = Uploader("https://highflyers-droniada.up.railway.app/drones")
+        self.figure_uploader = Uploader("https://highflyers-droniada.up.railway.app/samples")
 
         px4_qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -86,6 +86,7 @@ class UploadNode(Node):
             "redBall": "r",
             "purpleBall": "p",
             "blueBall": "b",
+            "barrel": "c"
         }
         return color_map.get(figure.type, "unknown")
 
