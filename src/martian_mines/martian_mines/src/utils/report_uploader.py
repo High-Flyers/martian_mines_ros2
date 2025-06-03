@@ -84,7 +84,6 @@ class UploadNode(Node):
         color_map = {
             "yellowBall": "y",
             "redBall": "r",
-            "purpleBall": "p",
             "blueBall": "b",
         }
         return color_map.get(figure.type, "unknown")

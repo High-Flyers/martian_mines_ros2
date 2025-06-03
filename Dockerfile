@@ -1,6 +1,28 @@
+FROM ubuntu:22.04 AS setup-ros-gpg
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install necessary packages and setup the ROS repository
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    gnupg2 \
+    lsb-release \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add the ROS GPG key
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros2-latest-archive-keyring.gpg
+
+# Configure the ROS repository
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros2-latest-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2.list
+
+>>>>>>> remotes/origin/main
 FROM ros:humble-ros-base AS build-librealsense
 
 ARG LIBRS_VERSION=2.55.1
+
+COPY --from=setup-ros-gpg /usr/share/keyrings/ros2-latest-archive-keyring.gpg /usr/share/keyrings/ros2-latest-archive-keyring.gpg
 
 # To avoid waiting for input during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -49,6 +71,8 @@ RUN cmake \
 
 FROM ros:humble-ros-base AS base
 
+
+COPY --from=setup-ros-gpg /usr/share/keyrings/ros2-latest-archive-keyring.gpg /usr/share/keyrings/ros2-latest-archive-keyring.gpg
 COPY --from=build-librealsense /opt/librealsense /usr/local/
 COPY --from=build-librealsense /usr/lib/python3/dist-packages/pyrealsense2 /usr/lib/python3/dist-packages/pyrealsense2
 COPY --from=build-librealsense /usr/src/librealsense/config/99-realsense-libusb.rules /etc/udev/rules.d/
@@ -60,7 +84,8 @@ ARG USER_UID=1000
 ARG USER_GID=${USER_UID}
 
 # Install general dependencies
-RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
+RUN apt-get update --allow-releaseinfo-change && \
+    apt-get install -y --no-install-recommends --fix-missing \
     openssh-client \
     build-essential \
     cmake \
@@ -80,8 +105,7 @@ RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
 
 RUN pip3 install ultralytics dill pyrr shapely transitions matplotlib opencv-contrib-python cv_bridge
 
-RUN pip3 install -U numpy==1.26.4 numpy-quaternion
-
+RUN pip3 install -U numpy==1.26.4 numpy-quaternion Jetson.GPIO
 
 # Create a non-root user with sudo privileges
 RUN groupadd --gid ${USER_GID} ${USERNAME} \

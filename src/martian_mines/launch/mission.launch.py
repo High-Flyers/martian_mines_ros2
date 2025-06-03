@@ -29,6 +29,14 @@ def generate_launch_description():
         # ),
         launch_ros.actions.Node(
             package="martian_mines", executable="trajectory_generator", output="screen", 
+
+        ),
+        launch_ros.actions.Node(
+            package="martian_mines", executable="gripper_controller", output="screen", parameters=[{
+        "cmd_pin": 5,
+        "ack_pin": 6
+    }]
+
         ),
         # launch_ros.actions.Node(
         #     package="martian_mines", executable="report_uploader", output="screen"

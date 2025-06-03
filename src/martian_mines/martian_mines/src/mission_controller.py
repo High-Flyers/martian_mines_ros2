@@ -66,6 +66,12 @@ class MissionController(Node):
             self.get_logger().error(f'STATE: {current_state.name}')
         self.prev_state = current_state
 
+    def log_state(self):
+        current_state = self.state_machine.state
+        if current_state.name != self.prev_state.name:
+            self.get_logger().error(f'STATE: {current_state.name}')
+        self.prev_state = current_state
+
 def main(args=None):
     try:
         rclpy.init(args=args)

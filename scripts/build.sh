@@ -20,4 +20,3 @@ colcon build ${SYMLINK_FLAG} \
         realsense2_camera \
         realsense2_description
 
-colcon build martian_mines_msgs

@@ -31,6 +31,6 @@
             ]
         }
     },
-    "onCreateCommand": "./scripts/build.sh ../.. --symlink-install"
+    //"onCreateCommand": "./scripts/build.sh ../.. --symlink-install"
 
 }
