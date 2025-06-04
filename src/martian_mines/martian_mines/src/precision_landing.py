@@ -13,6 +13,33 @@ from .drone.offboard import Offboard
 from px4_msgs.msg import LandingTargetPose
 import numpy as np
 
+class CircularQueue:
+    def __init__(self, size):
+        self.size = size
+        self.data = [0.0] * size
+        self.index = 0
+        self.count = 0
+        self.sum = 0.0
+
+    def append(self, value):
+        if self.count < self.size:
+            self.data[self.index] = value
+            self.sum += value
+            self.count += 1
+        else:
+            # Remove the value being overwritten from sum
+            self.sum -= self.data[self.index]
+            self.data[self.index] = value
+            self.sum += value
+        self.index = (self.index + 1) % self.size
+
+    def mean(self):
+        if self.count == 0:
+            return 0.0
+        return self.sum / self.count
+
+    def __len__(self):
+        return self.count
 
 def point_to_point_stamped(point: Point, frame_id='map') -> PointStamped:
     point_stamped = PointStamped()
@@ -62,6 +89,7 @@ class PrecisionLanding(Node):
         self.camera_model = PinholeCameraModel()
         self.landing_target = self.__init_landing_target()
         self.camera_info = wait_for_message(self, '/color/camera_info', CameraInfo)
+        self.last_target_positions = CircularQueue(30)
         
         self.timer_check_landing_status = None
 
@@ -123,12 +151,19 @@ class PrecisionLanding(Node):
 
     def __callback_landing_target_bbox(self, bbox: BoundingBox2D):
         target_pose = self.bbox_to_target_pose(bbox)
+        self.last_target_positions.append(np.array([target_pose.position.x, target_pose.position.y, target_pose.position.z]))
+        target_mean_position = self.last_target_positions.mean()
         self.landing_target.abs_pos_valid = True
-        self.landing_target.x_abs = target_pose.position.y
-        self.landing_target.y_abs = target_pose.position.x
-        self.landing_target.z_abs = -target_pose.position.z
+        self.landing_target.x_abs = target_mean_position[1]
+        self.landing_target.y_abs = target_mean_position[0]
+        self.landing_target.z_abs = -target_mean_position[2]
 
-        self.pub_estimated_target_object_point.publish(point_to_point_stamped(target_pose.position))
+        target_mean_pose = Pose()
+        target_mean_pose.position.x = target_mean_position[0]
+        target_mean_pose.position.y = target_mean_position[1]
+        target_mean_pose.position.z = target_mean_position[2]
+
+        self.pub_estimated_target_object_point.publish(point_to_point_stamped(target_mean_pose.position))
 
         self.pub_landing_target.publish(self.landing_target)
 
@@ -149,7 +184,7 @@ class PrecisionLanding(Node):
         target_pose_camera_link.header.frame_id = self.camera_link
         target_pose_map_link = self.tf_buffer.transform(target_pose_camera_link, "map")
         return target_pose_map_link.pose
-
+    
     def pixel_to_3d(self, x, y, distance):
         self.camera_model.fromCameraInfo(self.camera_info)
         point = self.camera_model.projectPixelTo3dRay((x, y))
