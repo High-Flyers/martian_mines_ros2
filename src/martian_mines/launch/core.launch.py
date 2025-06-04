@@ -89,13 +89,13 @@ def generate_launch_description():
                     parameters=[config_file, {'use_sim_time': use_sim_time}]
                 ),
                 # Detection node
-                # Node(
-                #     package='martian_mines',
-                #     executable='detection',
-                #     name='detection',
-                #     output='screen',
-                #     parameters=[config_file, {'use_sim_time': use_sim_time}]
-                # ),
+                Node(
+                    package='martian_mines',
+                    executable='detection',
+                    name='detection',
+                    output='screen',
+                    parameters=[config_file, {'use_sim_time': use_sim_time}]
+                ),
                 # Figure Finder node
                 Node(
                     package='martian_mines',
