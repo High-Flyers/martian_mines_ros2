@@ -22,9 +22,9 @@ class StateStart(State):
             self.offboard.arm()
 
         if self.offboard.is_armed:
-            self.offboard.takeoff(5.0, data["home_odometry"].heading)
+            self.offboard.takeoff(4.2, data["home_odometry"].heading)
 
-        if self.offboard.is_takeoff_finished(5.0):
+        if self.offboard.is_takeoff_finished(4.2):
             self.offboard_sent = False
             self.arm_sent = False
             

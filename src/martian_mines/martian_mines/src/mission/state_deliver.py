@@ -44,16 +44,19 @@ class StateDeliver(State):
             self.barrel_position = {"x": barrel.local_x, "y": barrel.local_y}
         
         if not self.barrel_reached:
-            self.offboard.fly_point(self.barrel_position["x"], self.barrel_position["y"], 5.0)
+            self.offboard.fly_point(self.barrel_position["x"], self.barrel_position["y"], 4.2)
             
-            if self.offboard.is_point_reached(self.barrel_position["x"], self.barrel_position["y"], 5.0, 0.2):
+            if self.offboard.is_point_reached(self.barrel_position["x"], self.barrel_position["y"], 4.2, 0.2):
                 self.barrel_reached = True
 
         if self.barrel_reached:
-            data["collection_idx"] += 1
-            # if not self.offboard.set_gripper(True):
-            #     return StateAction.CONTINUE, data
-            
-            return StateAction.FINISHED, data
+            self.offboard.fly_point(self.barrel_position["x"], self.barrel_position["y"], 3.0)
+
+            if self.offboard.is_point_reached(self.barrel_position["x"], self.barrel_position["y"], 3.0, 0.1):
+                data["collection_idx"] += 1
+                # if not self.offboard.set_gripper(True):
+                #     return StateAction.CONTINUE, data
+                
+                return StateAction.FINISHED, data
 
         return StateAction.CONTINUE, data

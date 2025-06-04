@@ -15,9 +15,9 @@ class StateReturn(State):
         if not self.rth_sent:
             if "home_odometry" in data:
                 home = data["home_odometry"]
-                self.offboard.fly_point(home.x, home.y, 5.0, home.heading)
+                self.offboard.fly_point(home.x, home.y, 4.2, home.heading)
 
-                if self.offboard.is_point_reached(home.x, home.y, 5.0, 0.2):
+                if self.offboard.is_point_reached(home.x, home.y, 4.2, 0.2):
                     self.offboard.land()
                     self.rth_sent = True
             
