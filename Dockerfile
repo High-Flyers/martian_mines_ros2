@@ -111,6 +111,9 @@ RUN groupadd --gid ${USER_GID} ${USERNAME} \
     && echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/${USERNAME} \
     && chmod 0440 /etc/sudoers.d/${USERNAME}
 
+RUN groupadd -f -r gpio
+RUN usermod -a -G gpio ${USERNAME}
+
 USER ${USERNAME}
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
