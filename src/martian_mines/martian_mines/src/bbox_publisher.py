@@ -15,7 +15,7 @@ class BBoxPublisher(Node):
         # Klient serwisu do startu precyzyjnego lądowania
         self.client_precision_landing_start = self.create_client(Trigger, "precision_landing/start")
         while not self.client_precision_landing_start.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info("Czekam na serwis precision_landing/start...")
+            self.get_logger().info("Wait for service precision_landing/start...")
 
         # Subskrypcja zakończenia lądowania
         self.create_service(Empty, "precision_landing/finished", self.__callback_precision_landing_finished)

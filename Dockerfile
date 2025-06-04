@@ -91,6 +91,7 @@ RUN apt-get update --allow-releaseinfo-change && \
     udev \
     ros-dev-tools \
     python3-pip \
+    python3-tk \
     ros-humble-geographic-msgs \
     ros-humble-vision-msgs \
     ros-humble-std-msgs \
@@ -100,6 +101,7 @@ RUN apt-get update --allow-releaseinfo-change && \
     ros-humble-launch-xml \
     ros-humble-launch-ros \
     ros-humble-rviz2 \
+    ros-humble-compressed-image-transport \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install ultralytics dill pyrr shapely transitions matplotlib opencv-contrib-python cv_bridge

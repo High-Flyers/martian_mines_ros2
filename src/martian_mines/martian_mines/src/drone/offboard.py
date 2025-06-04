@@ -194,6 +194,9 @@ class Offboard:
 
     def set_offboard_mode(self):
         self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=1.0, param2=6.0)
+    
+    def set_precision_landing_mode(self):
+        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_PRECLAND)
 
     def is_takeoff_finished(self, height, epsilon=0.1):
         if self._enu_local_odometry is None:

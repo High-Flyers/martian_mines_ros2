@@ -2,7 +2,6 @@ import rclpy
 from rclpy.node import Node
 from rclpy.duration import Duration
 from geometry_msgs.msg import PointStamped, Pose, Point
-from mavros_msgs.msg import LandingTarget
 from sensor_msgs.msg import CameraInfo
 from vision_msgs.msg import BoundingBox2D
 from std_msgs.msg import Empty
@@ -11,8 +10,36 @@ from tf2_ros import Buffer, TransformListener
 from image_geometry import PinholeCameraModel
 from tf2_geometry_msgs import PoseStamped
 from .drone.offboard import Offboard
+from px4_msgs.msg import LandingTargetPose
 import numpy as np
 
+class CircularQueue:
+    def __init__(self, size):
+        self.size = size
+        self.data = [0.0] * size
+        self.index = 0
+        self.count = 0
+        self.sum = 0.0
+
+    def append(self, value):
+        if self.count < self.size:
+            self.data[self.index] = value
+            self.sum += value
+            self.count += 1
+        else:
+            # Remove the value being overwritten from sum
+            self.sum -= self.data[self.index]
+            self.data[self.index] = value
+            self.sum += value
+        self.index = (self.index + 1) % self.size
+
+    def mean(self):
+        if self.count == 0:
+            return 0.0
+        return self.sum / self.count
+
+    def __len__(self):
+        return self.count
 
 def point_to_point_stamped(point: Point, frame_id='map') -> PointStamped:
     point_stamped = PointStamped()
@@ -27,6 +54,7 @@ def point_to_point_stamped(point: Point, frame_id='map') -> PointStamped:
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import CameraInfo
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 
 def wait_for_message(node, topic, msg_type, timeout=None):
     """ Custom implementation of rospy.wait_for_message in ROS2 """
@@ -61,17 +89,23 @@ class PrecisionLanding(Node):
         self.camera_model = PinholeCameraModel()
         self.landing_target = self.__init_landing_target()
         self.camera_info = wait_for_message(self, '/color/camera_info', CameraInfo)
-
-
+        self.last_target_positions = CircularQueue(30)
         
         self.timer_check_landing_status = None
 
         self.__init_precision_landing_params()
         self.wait_for_transform()
 
+        qos_profile = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+        )
+
         # Subscriptions and Publishers
         self.sub_target_object_point = self.create_subscription(BoundingBox2D, "precision_landing/landing_target/bbox", self.__callback_landing_target_bbox, 10)
-        self.pub_landing_target = self.create_publisher(LandingTarget, "mavros/landing_target/raw", 10)
+        self.pub_landing_target = self.create_publisher(LandingTargetPose, "fmu/in/landing_target_pose", qos_profile)
         self.pub_estimated_target_object_point = self.create_publisher(PointStamped, "precision_landing/landing_target/estimated/pose", 1)
         self.pub_landing_finished = self.create_publisher(Empty, "precision_landing/finished", 1)
         self.service_start = self.create_service(Trigger, "precision_landing/start", self.__callback_service_start)
@@ -81,9 +115,13 @@ class PrecisionLanding(Node):
 
     def wait_for_transform(self):
         self.get_logger().info("Waiting for transform from camera_link to map")
+        future = self.tf_buffer.wait_for_transform_async(
+            self.camera_link, "map", rclpy.time.Time()
+        )
         while rclpy.ok():
-            if self.tf_buffer.can_transform(self.camera_link, "map", rclpy.time.Time().to_msg()):
-                break
+            rclpy.spin_once(self, timeout_sec=1.0)
+            if future.done():
+                return
         self.get_logger().info("Transform from camera_link to map received")
 
     def __init_precision_landing_params(self):
@@ -102,30 +140,38 @@ class PrecisionLanding(Node):
         # self.offboard.set_param('PLD_MAX_SRCH', max_search_attempts)
         # self.offboard.set_param('PLD_SRCH_TOUT', search_timeout)
 
-    def __init_landing_target(self) -> LandingTarget:
-        landing_target = LandingTarget()
-        landing_target.header.stamp = rclpy.time.Time().to_msg()
-        landing_target.header.frame_id = 'map'
-        landing_target.frame = 1  # MAV_FRAME_LOCAL_NED
-        landing_target.type = LandingTarget.VISION_OTHER
+    def __init_landing_target(self) -> LandingTargetPose:
+        landing_target = LandingTargetPose()
+        landing_target.is_static = True
+        landing_target.rel_pos_valid = False
+        landing_target.rel_vel_valid = False
+        landing_target.abs_pos_valid = False
 
         return landing_target
 
     def __callback_landing_target_bbox(self, bbox: BoundingBox2D):
-        self.landing_target.header.stamp = rclpy.time.Time().to_msg()
+        target_pose = self.bbox_to_target_pose(bbox)
+        self.last_target_positions.append(np.array([target_pose.position.x, target_pose.position.y, target_pose.position.z]))
+        target_mean_position = self.last_target_positions.mean()
+        self.landing_target.abs_pos_valid = True
+        self.landing_target.x_abs = target_mean_position[1]
+        self.landing_target.y_abs = target_mean_position[0]
+        self.landing_target.z_abs = -target_mean_position[2]
 
-        self.landing_target.pose = self.bbox_to_target_pose(bbox)
-        self.landing_target.size = [bbox.size_x, bbox.size_y]
+        target_mean_pose = Pose()
+        target_mean_pose.position.x = target_mean_position[0]
+        target_mean_pose.position.y = target_mean_position[1]
+        target_mean_pose.position.z = target_mean_position[2]
 
-        self.pub_estimated_target_object_point.publish(point_to_point_stamped(self.landing_target.pose.position))
+        self.pub_estimated_target_object_point.publish(point_to_point_stamped(target_mean_pose.position))
 
         self.pub_landing_target.publish(self.landing_target)
 
-    def __callback_service_start(self, req):
-        response = self.offboard.set_precision_landing_mode()
+    def __callback_service_start(self, req, res):
+        self.offboard.set_precision_landing_mode()
         self.timer_check_landing_status = self.create_timer(0.1, self.__callback_check_landing_status)
 
-        return Trigger.Response(success=response.mode_sent, message="")
+        return Trigger.Response(success=True, message="")
 
     def __callback_check_landing_status(self):
         if self.offboard.is_landed():
@@ -133,11 +179,12 @@ class PrecisionLanding(Node):
             self.timer_check_landing_status.cancel()
 
     def bbox_to_target_pose(self, bbox: BoundingBox2D) -> Pose:
-        distance = self.offboard.rel_alt
-        target_pose_camera_link = self.pixel_to_3d(bbox.center.x, bbox.center.y, distance)
-        target_pose_map_link = self.tf_buffer.transform(target_pose_camera_link, self.camera_link, "map")
+        distance = self.offboard.enu_local_odom.z
+        target_pose_camera_link = self.pixel_to_3d(bbox.center.position.x, bbox.center.position.y, distance)
+        target_pose_camera_link.header.frame_id = self.camera_link
+        target_pose_map_link = self.tf_buffer.transform(target_pose_camera_link, "map")
         return target_pose_map_link.pose
-
+    
     def pixel_to_3d(self, x, y, distance):
         self.camera_model.fromCameraInfo(self.camera_info)
         point = self.camera_model.projectPixelTo3dRay((x, y))

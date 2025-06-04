@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 import time
 import matplotlib
+import math
 
 from sensor_msgs.msg import CameraInfo
 from image_geometry import PinholeCameraModel
@@ -105,8 +106,15 @@ class TrajectoryGenerator(Node):
         for coord in polygon_coords:
             self.get_logger().info(f"Coordinate: {coord}")
         
+        width = self.camera_model.width
+        height = self.camera_model.height
+        fx = self.camera_model.fx()
+        fy = self.camera_model.fy()
+        fov_x = 2 * math.atan(width / (2 * fx))
+        fov_y = 2 * math.atan(height / (2 * fy))
+
         trajectory = ScanTrajectory(
-            polygon_coords, self.camera_model.fx(), self.camera_model.fy()
+            polygon_coords, fov_x, fov_y
         )
         trajectory.set_altitude(altitude)
         trajectory.set_overlap(overlap)

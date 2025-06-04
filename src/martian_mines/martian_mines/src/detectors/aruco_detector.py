@@ -8,7 +8,7 @@ from .abstract_detector import AbstractDetector
 
 
 class ArucoDetector(AbstractDetector):
-    def __init__(self, aruco_dict=cv2.aruco.DICT_ARUCO_ORIGINAL):
+    def __init__(self, aruco_dict=cv2.aruco.DICT_4X4_100):
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(aruco_dict)
         self.aruco_params = cv2.aruco.DetectorParameters()
         self.corners = []
@@ -34,10 +34,10 @@ class ArucoDetector(AbstractDetector):
         y_max = int(corner[0][:, 1].max())
 
         bbox = BoundingBox2D()
-        bbox.center.x = (x_min + x_max) / 2
-        bbox.center.y = (y_min + y_max) / 2
-        bbox.size_x = x_max - x_min
-        bbox.size_y = y_max - y_min
+        bbox.center.position.x = (x_min + x_max) / 2
+        bbox.center.position.y = (y_min + y_max) / 2
+        bbox.size_x = float(x_max - x_min)
+        bbox.size_y = float(y_max - y_min)
 
         return bbox
     
