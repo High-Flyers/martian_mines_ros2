@@ -91,18 +91,18 @@ class FigureCollector:
                 continue
 
             closest_group = None
-            # min_distance = self.dist_thresh
+            min_distance = self.dist_thresh
             for fig_group in self.fig_groups:
-                if fig_group.get_most_common_determined_type() == new_fig.determined_type:
-                    closest_group = fig_group
-
-                # if self.use_local_coords:
-                #     dist = math.sqrt(pow(fig_group.mean_coords[0] - new_fig.local_frame_coords[0], 2) + pow(fig_group.mean_coords[1] - new_fig.local_frame_coords[1], 2))
-                # else:
-                #     dist = get_coords_distance(fig_group.mean_coords, new_fig.coords)
-                # if dist < min_distance:  # TODO consider adding to many groups when dist < thresh
+                # if fig_group.get_most_common_determined_type() == new_fig.determined_type:
                 #     closest_group = fig_group
-                #     min_distance = dist
+
+                if self.use_local_coords:
+                    dist = math.sqrt(pow(fig_group.mean_coords[0] - new_fig.local_frame_coords[0], 2) + pow(fig_group.mean_coords[1] - new_fig.local_frame_coords[1], 2))
+                else:
+                    dist = get_coords_distance(fig_group.mean_coords, new_fig.coords)
+                if dist < min_distance:  # TODO consider adding to many groups when dist < thresh
+                    closest_group = fig_group
+                    min_distance = dist
 
             if closest_group is None:
                 self.append_new_fig_group(new_fig)

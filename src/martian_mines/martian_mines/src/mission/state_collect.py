@@ -1,5 +1,6 @@
 from rclpy.node import Node
 
+from std_msgs.msg import Empty
 from std_srvs.srv import Trigger
 
 from martian_mines_msgs.msg import FigureMsgList
@@ -14,12 +15,19 @@ class StateCollect(State):
         self.node = node
 
         self.client_figure_finder_finish = self.node.create_client(Trigger, 'figure_finder/finish')
+        self.client_precision_landing_start = self.node.create_client(Trigger, 'precision_landing/start')
+
         self.confirmed_figures_sub = self.node.create_subscription(FigureMsgList, "figure_finder/confirmed_figures", self.confirmed_figures_cb, 10)
+        self.precision_landing_finished_sub = self.node.create_subscription(Empty, "precision_landing/finished", self.precision_landing_finished_cb, 1)
 
         self.future_figure_finder_finish = None
+        self.future_precision_landing_start = None
 
         self.collection_order = ["blueBall", "redBall", "yellowBall"]
         self.confirmed_figures = None
+
+        self.is_landing = False
+        self.is_precision_landing_finished = False
 
     def handle(self, data):
         if self.confirmed_figures is None:
@@ -44,21 +52,30 @@ class StateCollect(State):
             return StateAction.FINISHED, data
 
         color = self.collection_order[data["collection_idx"]]
-        figure = [fig for fig in self.confirmed_figures if fig.type == color]
+        figures = [fig for fig in self.confirmed_figures if fig.type == color]
         
-        if len(figure) < 1:
+        if len(figures) < 1:
             data["collection_idx"] += 1
             return StateAction.CONTINUE, data
         else:
-            figure = figure[0]
+            figure = figures[0]
 
-        self.offboard.fly_point(figure.local_x, figure.local_y, 4.0, data["home_odometry"].heading)
-        if self.offboard.is_point_reached(figure.local_x, figure.local_y, 4.0, 0.1):
-            self.offboard.land()
+        if not self.is_landing:
+            if self.future_precision_landing_start is None:
+                self.offboard.fly_point(figure.local_x, figure.local_y, 4.0, data["home_odometry"].heading)
+                if self.offboard.is_point_reached(figure.local_x, figure.local_y, 4.0, 0.1):
+                    self.future_precision_landing_start = self.client_precision_landing_start.call_async(Trigger.Request())
+            
+            elif self.future_precision_landing_start.done():
+                self.is_landing = True
 
-        if not self.offboard.is_armed:
+        if self.is_precision_landing_finished and not self.offboard.is_armed:
             # if not self.offboard.set_gripper(False):
                 # return StateAction.CONTINUE, data
+
+            self.future_figure_finder_finish = None
+            self.is_landing = False
+            self.is_precision_landing_finished = False
             return StateAction.TAKEOFF, data
 
         return StateAction.CONTINUE, data
@@ -66,3 +83,6 @@ class StateCollect(State):
 
     def confirmed_figures_cb(self, msg):
         self.confirmed_figures = msg.figures
+
+    def precision_landing_finished_cb(self, _):
+        self.is_precision_landing_finished = True
