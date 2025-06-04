@@ -24,25 +24,45 @@ def generate_launch_description():
 
     # Define UAV0 nodes
     uav0_nodes = GroupAction([
-        launch_ros.actions.PushRosNamespace('uav0'),
+        # launch_ros.actions.PushRosNamespace('uav0'),
         Node(
             package='martian_mines',
             executable='precision_landing',
             name='precision_landing',
             output='screen',
-            parameters=[PathJoinSubstitution([martian_mines_dir, 'config', 'aruco.yaml'])]
+            parameters=[
+                PathJoinSubstitution([martian_mines_dir, 'config', 'aruco.yaml']),
+                {"use_sim_time": True},
+            ],
         ),
         Node(
             package='martian_mines',
             executable='detection',
             name='detection',
-            output='screen'
+            output='screen',
+            parameters=[
+                {"detector": "aruco"},
+                {"use_sim_time": True},
+            ],
         ),
         Node(
             package='martian_mines',
             executable='bbox_publisher',
             name='land_on_target',
-            output='screen'
+            output='screen',
+            parameters=[
+                {"use_sim_time": True},
+            ],
+        ),
+        launch_ros.actions.Node(
+            package="martian_mines", executable="mission_controller", output="screen", parameters=[{'use_sim_time': True}]
+        ),
+        launch_ros.actions.Node(
+            package="rviz2",
+            executable="rviz2",
+            name="rviz",
+            arguments=["-d", PathJoinSubstitution([martian_mines_dir, 'config', 'precision_landing.rviz'])],
+            output="screen",
         ),
     ])
 

@@ -14,14 +14,14 @@ def generate_launch_description():
     real_world = LaunchConfiguration('real_world')
     config_file = LaunchConfiguration('config_file')
     no_start_pose = LaunchConfiguration('no_start_pose')
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    use_sim_time = LaunchConfiguration('use_sim_time', default='True')
 
     return LaunchDescription([
         # PX4 Environment variable
         SetEnvironmentVariable('PX4_SIM_SPEED_FACTOR', '1'),
 
         # Declare arguments
-        DeclareLaunchArgument('real_world', default_value='false'),
+        DeclareLaunchArgument('real_world', default_value='False'),
         DeclareLaunchArgument(
             'config_file',
             default_value=os.path.join(martian_mines_share, 'config', 'sim.yaml'),
@@ -32,8 +32,8 @@ def generate_launch_description():
             default_value=os.path.join(martian_mines_share, 'config', 'real.yaml'),
             condition=IfCondition(real_world)
         ),
-        DeclareLaunchArgument('no_start_pose', default_value='false'),
-        DeclareLaunchArgument('use_sim_time', default_value='true'),
+        DeclareLaunchArgument('no_start_pose', default_value='False'),
+        DeclareLaunchArgument('use_sim_time', default_value='True'),
 
         # Real-world setup
         GroupAction(
@@ -63,7 +63,7 @@ def generate_launch_description():
                     package='tf2_ros',
                     executable='static_transform_publisher',
                     name='tf_base_link_camera',
-                    arguments=['0', '0', '0', '0', '-1.571', '0', 'base_link', 'camera_link'],
+                    arguments=['0', '0', '0', '-1.571', '0', '-3.14', 'base_link', 'camera_link'],
                     parameters=[{'use_sim_time': use_sim_time}]
                 ),
                 Node(
@@ -89,13 +89,13 @@ def generate_launch_description():
                     parameters=[config_file, {'use_sim_time': use_sim_time}]
                 ),
                 # Detection node
-                Node(
-                    package='martian_mines',
-                    executable='detection',
-                    name='detection',
-                    output='screen',
-                    parameters=[config_file, {'use_sim_time': use_sim_time}]
-                ),
+                # Node(
+                #     package='martian_mines',
+                #     executable='detection',
+                #     name='detection',
+                #     output='screen',
+                #     parameters=[config_file, {'use_sim_time': use_sim_time}]
+                # ),
                 # Figure Finder node
                 Node(
                     package='martian_mines',

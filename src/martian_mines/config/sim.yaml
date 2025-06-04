@@ -22,7 +22,7 @@ tf_start_pose:
 camera_remap:
   ros__parameters:
     input_topic_image_raw: /camera
-    input_topic_camera_info: /
+    input_topic_camera_info: /camera
 
 #additional settings
 #upload_data: true

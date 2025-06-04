@@ -8,7 +8,7 @@ from ament_index_python import get_package_share_directory
 import rclpy
 from rclpy.node import Node
 
-from sensor_msgs.msg import Image, CompressedImage
+from sensor_msgs.msg import Image, CompressedImage, CameraInfo
 
 from martian_mines_msgs.msg import BoundingBoxLabeledList
 from .detectors.aruco_detector import ArucoDetector
@@ -48,6 +48,7 @@ class Detection(Node):
     def publish_compressed_visualization(self, image_np: np.array):
         msg = CompressedImage()
         msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = "map"
         msg.format = "jpeg"
         image_np = cv2.resize(image_np, (640, 360))
         msg.data = np.array(cv2.imencode(".jpg", image_np)[1]).tobytes()
