@@ -104,18 +104,5 @@ ros2 topic pub --once /mission_start std_msgs/Empty "{}"
 ```
 Once everything is running, you should observe the drone arming and mission-related status messages printed in the terminal.
 
-### TO DO  List
-- Launches
-  - [x] core.launch 
-  - [ ] example_precison_landing.launch 
-  - [x] example_trajectory_tracker.launch 
-  - [x] figure_finder.launch.py
-  - [x] figures_vis.launch
-  - [x] mission.launch 
-  - [ ] realsense.launch 
-  - [ ] rosbag_play.launch 
-  - [ ] rosbag_record.launch 
-  - [ ] rviz.launch 
-
 ### Throubleshoting
 If you will encounter a problem with "xcb" (GUI applications won't open) just run `xhost +local:docker` on your host machine.
